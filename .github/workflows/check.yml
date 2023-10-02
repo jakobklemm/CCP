@@ -1,0 +1,53 @@
+on: 
+  push:
+    branches: [ master, crashey ]
+  pull_request:
+name: check
+jobs:
+  required:
+    runs-on: ubuntu-latest
+    name: stable / fmt  
+    steps:
+      - name: Checkout  
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Install stable 
+        uses: dtolnay/rust-toolchain@stable
+      - name: cargo fmt -check
+        run: cargo fmt --check
+  clippy:
+    runs-on: ubuntu-latest
+    name: stable / clippy
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Install stable
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          components: clippy
+          override: true
+      - name: cargo clippy
+        uses: actions-rs/clippy@master
+        with:
+          args: --all-features --all-targets
+  features:
+    runs-on: ubuntu-latest
+    name: ubuntu / stable / features
+    steps:
+      - name: Checkout  
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Install stable 
+        uses: dtolnay/rust-toolchain@stable
+      - name: Install hack
+        uses: taiki-e/install-action@cargo-hack
+      - name: cargo hack
+        run: cargo hack --feature-powerset check
+
+
+
