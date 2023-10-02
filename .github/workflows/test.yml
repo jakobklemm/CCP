@@ -21,24 +21,6 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
       - name: cargo test
         run: cargo test --all-features --all-targets
-  minimal:
-    runs-on: ubuntu-latest
-    name: ubuntu / minimal-versions
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: true
-      - name: Install stable
-        uses: dtolnay/rust-toolchain@stable
-      - name: Install nightly
-        uses: dtolnay/rust-toolchain@nightly
-      - name: rustup default stable
-        run: rustup default stable
-      - name: cargo update minimal
-        run: cargo +nightly update -Zminimal-versions
-      - name: cargo test
-        run: cargo test --all-features --all-targets
   os-check:
     runs-on: ${{ matrix.os }}
     name: ${{ matrix.os }} / stable

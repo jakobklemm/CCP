@@ -1,10 +1,10 @@
 //! # IDs
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct SID (Uuid);
+pub struct SID(Uuid);
 
 impl Default for SID {
     fn default() -> Self {
@@ -13,10 +13,12 @@ impl Default for SID {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct EID (usize);
+pub struct EID(i32);
 
 impl Default for EID {
     fn default() -> Self {
-        Self(0)
+        Self(
+            crate::config::Config::getNextID()
+        )
     }
 }

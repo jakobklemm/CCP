@@ -1,0 +1,4 @@
+#+TITLE: DCP - Distributed Content Processor
+
+Prototype for the =CCP= media management system deployed locally on end user
+machines. 
