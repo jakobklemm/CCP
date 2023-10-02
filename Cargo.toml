@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = "1.0.75"
 clap = { version = "4.4.4", features = ["derive"] }
 crossterm = "0.27.0"
 lazy_static = "1.4.0"
@@ -13,4 +14,5 @@ polodb_core = "4.4.0"
 ratatui = { version = "0.23.0", features = ["all-widgets"] }
 serde = { version = "1.0.188", features = ["derive"] }
 serde_json = "1.0.107"
+tokio = { version = "1.32.0", features = ["rt", "full"] }
 uuid = { version = "1.4.1", features = ["v4"] }
