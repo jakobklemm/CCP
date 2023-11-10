@@ -37,71 +37,29 @@ lazy_static! {
 }
 
 fn main() -> Result<()> {
-    // util::ensure_configured()?;
+    util::ensure_configured()?;
 
-    // let mut app = App::default();
+    let mut app = App::default();
 
-    // let term = Terminal::new(CrosstermBackend::new(stderr()))?;
-    // let events = handler::EventHandler::new(250);
-    // let mut tui = terminal::Terminal::new(term, events);
-    // tui.enter()?;
+    let term = Terminal::new(CrosstermBackend::new(stderr()))?;
+    let events = handler::EventHandler::new(105);
+    let mut tui = terminal::Terminal::new(term, events);
+    tui.enter()?;
 
-    // while false {//!app.should_quit() {
-    //     tui.draw(&mut app)?;
-    //     match tui.events.next()? {
-    //         Event::Tick => {}
-    //         Event::Key(event) => update::update(&mut app, event),
-    //         Event::Mouse(_m) => {}
-    //         Event::Resize(_, _) => {}
-    //     }
-    // }
-
-    // tui.exit()?;
-
-    let instance = vlc::Instance::new().unwrap();
-    let media = vlc::Media::new_path(&instance, "test.mp4").unwrap();
-    let mdp = vlc::MediaPlayer::new(&instance).unwrap();
-
-    let (tx, rx) = std::sync::mpsc::channel::<()>();
-    
-    let em = media.event_manager();
-    let _ = em.attach(vlc::EventType::MediaStateChanged, move |e, _| {
-        match e {
-            vlc::Event::MediaStateChanged(s) => {
-                println!("State : {:?}", s);
-                if s == vlc::State::Ended || s == vlc::State::Error {
-                    tx.send(()).unwrap();
-                }
-            },
-            vlc::Event::MediaPlayerPaused => {
-                println!("PAUSED!");
+    while !app.should_quit() {
+        tui.draw(&mut app)?;
+        match tui.events.next()? {
+            Event::Tick => {
+                app.tick();
             }
-            _ => (),
+            Event::Key(event) => update::update(&mut app, event),
+            Event::Mouse(_m) => {}
+            Event::Resize(_, _) => {}
         }
-    });
+    }
 
-    mdp.set_media(&media);
-    mdp.play().unwrap();
-
-    println!("can PAUSE:    / {:?}", mdp.can_pause());
-
-    std::thread::sleep(std::time::Duration::from_millis(5000));
-
-    mdp.pause();
-
-    std::thread::sleep(std::time::Duration::from_millis(5000));
-
-    mdp.navigate(0);
-
-    mdp.pause();
-
-    std::thread::sleep(std::time::Duration::from_millis(5000));
-
-    rx.recv().unwrap();
+    tui.exit()?;
 
     Ok(())
 }
 
-fn on_pause(frame: i64) {
-    println!("paused !!! {:?}", frame);
-}
