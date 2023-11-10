@@ -16,6 +16,17 @@ pub struct App<'a> {
     quit: bool,
 }
 
+enum Interface {
+    Dashboard,
+    Search {
+        input: TextArea<'static>
+    },
+    Tags {},
+    People {},
+    Import {},
+    Export {}
+}
+
 impl<'a> App<'a> {
     // Tick event of terminal
     pub fn tick(&mut self) {
