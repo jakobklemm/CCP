@@ -18,3 +18,4 @@ tantivy = "0.21.1"
 tokio = { version = "1.32.0", features = ["rt", "full"] }
 tui-textarea = "0.3.1"
 uuid = { version = "1.4.1", features = ["v4"] }
+vlc-rs = "0.3.0"
