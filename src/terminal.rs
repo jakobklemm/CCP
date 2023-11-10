@@ -1,15 +1,15 @@
 //! Terminal
 
+use crate::application::App;
+use crate::handler::EventHandler;
+use crate::interface;
+use crate::util;
 use anyhow::Result;
 use crossterm::{
     event::{DisableMouseCapture, EnableMouseCapture},
     terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use std::panic;
-use crate::handler::EventHandler;
-use crate::util;
-use crate::application::App;
-use crate::interface;
 
 pub type CrosstermTerminal = ratatui::Terminal<ratatui::backend::CrosstermBackend<std::io::Stderr>>;
 
@@ -20,9 +20,7 @@ pub struct Terminal {
 
 impl Terminal {
     pub fn new(terminal: CrosstermTerminal, events: EventHandler) -> Self {
-        Self {
-            terminal, events
-        }
+        Self { terminal, events }
     }
 
     pub fn enter(&mut self) -> Result<()> {

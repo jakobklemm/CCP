@@ -1,13 +1,16 @@
 //! Utility functions
 
+use crate::Config;
 use crate::DATABASE;
 use polodb_core::bson::doc;
-use crate::Config;
 
-use crossterm::{terminal::{enable_raw_mode, disable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen}, execute};
-use crossterm::event::{EnableMouseCapture, DisableMouseCapture};
-use std::io::stdout;
 use anyhow::Result;
+use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
+use crossterm::{
+    execute,
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+};
+use std::io::stdout;
 
 pub fn ensure_configured() -> Result<()> {
     let col = DATABASE.collection::<Config>("config");
@@ -15,9 +18,7 @@ pub fn ensure_configured() -> Result<()> {
         "_id": "CONFIG"
     })?;
     match config {
-        Some(_c) => {
-            Ok(())
-        }
+        Some(_c) => Ok(()),
         None => {
             let config = Config::default();
             let _ = col.insert_one(config);
@@ -25,7 +26,7 @@ pub fn ensure_configured() -> Result<()> {
         }
     }
 }
- 
+
 pub fn terminal_startup() -> Result<()> {
     enable_raw_mode()?;
     execute!(stdout(), EnterAlternateScreen, EnableMouseCapture)?;

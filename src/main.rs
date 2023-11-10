@@ -5,26 +5,26 @@ use anyhow::Result;
 mod application;
 mod config;
 mod entry;
+mod handler;
 mod interface;
 mod processor;
-mod handler;
 mod terminal;
 mod update;
 mod util;
 
 use crate::handler::Event;
 
+use application::App;
 use config::Config;
+use crossterm::event::{self, KeyCode, KeyEventKind};
 use entry::Entry;
 use lazy_static::lazy_static;
 use polodb_core::{bson::doc, Database};
-use application::App;
-use std::io::stderr;
-use crossterm::event::{self, KeyCode, KeyEventKind};
 use ratatui::{
     prelude::{CrosstermBackend, Terminal},
     widgets::Paragraph,
 };
+use std::io::stderr;
 
 use std::time::Duration;
 
@@ -51,7 +51,7 @@ fn main() -> Result<()> {
         match tui.events.next()? {
             Event::Tick => {}
             Event::Key(event) => update::update(&mut app, event),
-            Event::Mouse(_) => {},
+            Event::Mouse(_m) => {}
             Event::Resize(_, _) => {}
         }
     }
