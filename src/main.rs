@@ -1,15 +1,32 @@
 // Main
 
-use anyhow::Error;
+use anyhow::Result;
 
-mod entry;
-mod processor;
+mod application;
 mod config;
+mod entry;
+mod interface;
+mod processor;
+mod handler;
+mod terminal;
+mod update;
+mod util;
+
+use crate::handler::Event;
 
 use config::Config;
-use entry::{Entry};
+use entry::Entry;
 use lazy_static::lazy_static;
-use polodb_core::{Database, bson::doc};
+use polodb_core::{bson::doc, Database};
+use application::App;
+use std::io::stderr;
+use crossterm::event::{self, KeyCode, KeyEventKind};
+use ratatui::{
+    prelude::{CrosstermBackend, Terminal},
+    widgets::Paragraph,
+};
+
+use std::time::Duration;
 
 lazy_static! {
     pub static ref DATABASE: Database = {
@@ -19,26 +36,27 @@ lazy_static! {
     pub static ref ROOT: String = std::env::var("CCP_ROOT").unwrap_or("/database".to_string());
 }
 
-fn main() -> Result<(), Error> {
-    ensure_configured();
-    let e = Entry::default();
-    println!("{:?}", e);
-    Ok(())
-}
+fn main() -> Result<()> {
+    util::ensure_configured()?;
 
-fn ensure_configured() {
-    let col = DATABASE.collection::<Config>("config");
-    let config = col.find_one(doc! {
-        "_id": "CONFIG"
-    }).expect("Unable to properly handle configuration.");
-    match config {
-        Some(c) => {
-            println!("Existing configuration found: {:?}", c);
-        }
-        None => {
-            println!("No existing configuration found, creating new one.");
-            let config = Config::default();
-            let _ = col.insert_one(config);
+    let mut app = App::default();
+
+    let term = Terminal::new(CrosstermBackend::new(stderr()))?;
+    let events = handler::EventHandler::new(250);
+    let mut tui = terminal::Terminal::new(term, events);
+    tui.enter()?;
+
+    while !app.should_quit() {
+        tui.draw(&mut app)?;
+        match tui.events.next()? {
+            Event::Tick => {}
+            Event::Key(event) => update::update(&mut app, event),
+            Event::Mouse(_) => {},
+            Event::Resize(_, _) => {}
         }
     }
+
+    tui.exit()?;
+
+    Ok(())
 }
