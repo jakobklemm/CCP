@@ -1,17 +1,17 @@
 //! Event Handler
 
-use crossterm::event::{self, Event as CrossEvent, KeyEvent, MouseEvent, KeyEventKind};
-use std::sync::mpsc::{channel, Sender, Receiver};
+use anyhow::Result;
+use crossterm::event::{self, Event as CrossEvent, KeyEvent, KeyEventKind, MouseEvent};
+use std::sync::mpsc::{channel, Receiver, Sender};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
-use anyhow::Result;
 
 #[derive(Clone, Debug)]
 pub enum Event {
     Tick,
     Key(KeyEvent),
     Mouse(MouseEvent),
-    Resize(u16, u16)
+    Resize(u16, u16),
 }
 
 #[derive(Debug)]
@@ -42,17 +42,14 @@ impl EventHandler {
                                     Ok(())
                                 }
                             }
-                            CrossEvent::Mouse(e) => {
-                                sender.send(Event::Mouse(e))
-                            }
-                            CrossEvent::Resize(w, h) => {
-                                sender.send(Event::Resize(w, h))
-                            }
+                            CrossEvent::Mouse(e) => sender.send(Event::Mouse(e)),
+                            CrossEvent::Resize(w, h) => sender.send(Event::Resize(w, h)),
                             _ => {
                                 // focus lost & gained events
                                 unimplemented!()
                             }
-                        }.expect("outer error")
+                        }
+                        .expect("outer error")
                     }
 
                     if last.elapsed() >= rate {

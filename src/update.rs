@@ -11,8 +11,16 @@ pub fn update(app: &mut App, key: KeyEvent) {
                 app.quit();
             }
         }
-        KeyCode::Char('j') => app.increment(),
-        KeyCode::Char('k') => app.decrement(),
-        _ => {}
+        // KeyCode::Char('j') => app.increment(),
+        // KeyCode::Char('k') => app.decrement(),
+        KeyCode::Char('l') if key.modifiers == KeyModifiers::CONTROL => app.index += 1,
+        KeyCode::Char('h') if key.modifiers == KeyModifiers::CONTROL => app.index -= 1,
+        KeyCode::Tab => {
+            app.home.active = (app.home.active + 1) % 2;
+        }
+        _ => {
+            app.home.handle(key);
+        }
+
     }
 }

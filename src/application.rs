@@ -1,12 +1,18 @@
 //! Application
 
+use tui_textarea::{TextArea};
+use crossterm::event::{KeyCode, KeyEvent};
+use ratatui::{style::Style, widgets::{Borders, Block}};
+
 #[derive(Debug, Default)]
-pub struct App {
+pub struct App<'a> {
     counter: i64,
+    pub index: i64,
+    pub home: HomeScreen<'a>,
     quit: bool,
 }
 
-impl App {
+impl<'a> App<'a> {
     // Tick event of terminal
     pub fn tick(&self) {}
 
@@ -17,6 +23,10 @@ impl App {
 
     pub fn should_quit(&self) -> bool {
         self.quit
+    }
+
+    pub fn get_index(&self) -> usize {
+        self.index as usize
     }
 
     // Quit event
@@ -32,5 +42,45 @@ impl App {
     // decrement
     pub fn decrement(&mut self) {
         self.counter -= 1;
+    }
+}
+
+#[derive(Debug)]
+pub struct HomeScreen<'a> {
+    pub active: usize,
+    pub first: TextArea<'a>,
+    pub second: TextArea<'a>,
+}
+
+impl<'a> HomeScreen<'a> {
+    pub fn handle(&mut self, key: KeyEvent) {
+        match self.active % 2 {
+            0 => self.first.input(key),
+            1 => self.second.input(key),
+            _ => todo!()
+        };
+    }
+}
+
+impl<'a> Default for HomeScreen<'a> {
+    fn default() -> Self {
+        let mut area = TextArea::default();
+        area.set_cursor_line_style(Style::default());
+        area.set_placeholder_text("First Text Box");
+        Self {
+            active: 0,
+            first: area,
+            second: {
+                let mut area = TextArea::default();
+                area.set_cursor_line_style(Style::default());
+                area.set_placeholder_text("First Text Box");
+                area.set_block(
+                    Block::default()
+                        .borders(Borders::ALL)
+                        .title(format!("SECOND Input Box"))
+                );
+                area
+            }
+        }
     }
 }
