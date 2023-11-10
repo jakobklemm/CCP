@@ -44,7 +44,7 @@ pub fn render(app: &mut App, f: &mut Frame) {
         .style(Style::new().fg(Color::Gray))
         .alignment(Alignment::Center);
 
-    let sections = ["Home", "Counter"]
+    let sections = ["Dashboard", "Search", "Tags", "People" ,"Import", "Export"]
         .iter()
         .cloned()
         .map(Line::from)
@@ -60,7 +60,7 @@ pub fn render(app: &mut App, f: &mut Frame) {
         )
         .highlight_style(Style::default().fg(Color::Red).add_modifier(Modifier::BOLD))
         .style(Style::default().fg(Color::LightRed))
-        .divider(" - ")
+        .divider(" | ")
         .select(app.get_index());
 
     f.render_widget(tabs, bar[0]);
@@ -69,7 +69,7 @@ pub fn render(app: &mut App, f: &mut Frame) {
     match app.get_index() {
         0 => draw_home(f, app, layout[1]),
         1 => draw_counter(f, app, layout[1]),
-        _ => todo!(),
+        _ => {},
     }
 }
 

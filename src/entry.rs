@@ -13,6 +13,7 @@ pub struct Entry {
     // primary key fuckery
     tags: Vec<Uuid>,
     people: Vec<Uuid>,
+    text: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -38,6 +39,7 @@ impl Default for Entry {
             title: String::from("TITLE MISSING"),
             tags: Vec::new(),
             people: Vec::new(),
+            text: String::new(),
         }
     }
 }
