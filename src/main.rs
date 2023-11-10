@@ -58,5 +58,7 @@ fn main() -> Result<()> {
 
     tui.exit()?;
 
+    let instance = vlc::Instance::new().unwrap();
+
     Ok(())
 }

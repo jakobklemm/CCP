@@ -4,7 +4,7 @@ use crate::application::App;
 
 use ratatui::{
     backend::Backend,
-    layout::{Constraint, Rect},
+    layout::{Constraint, Rect, Direction},
     prelude::{Alignment, Frame, Layout},
     style::{Color, Modifier, Style},
     text::Line,
@@ -13,7 +13,7 @@ use ratatui::{
 
 pub fn render(app: &mut App, f: &mut Frame) {
     let layout = Layout::default()
-        .constraints([Constraint::Length(3), Constraint::Min(0)])
+        .constraints([Constraint::Length(3), Constraint::Percentage(20)])
         .split(f.size());
 
     let sections = ["Home", "Counter"]
@@ -60,7 +60,8 @@ fn draw_home(f: &mut Frame, app: &mut App, area: Rect) {
         );
 
     let inner = Layout::default()
-        .constraints([Constraint::Length(3), Constraint::Min(1)])
+        .constraints([Constraint::Percentage(30), Constraint::Percentage(70)])
+        .direction(Direction::Horizontal)
         .split(chunks[1]);
 
     if app.home.active % 2 == 0 {
