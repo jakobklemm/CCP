@@ -16,6 +16,34 @@ pub fn render(app: &mut App, f: &mut Frame) {
         .constraints([Constraint::Length(3), Constraint::Percentage(20)])
         .split(f.size());
 
+    let bar = Layout::default()
+        .constraints([Constraint::Percentage(96), Constraint::Percentage(4)])
+        .direction(Direction::Horizontal)
+        .split(layout[0]);
+
+        let percision = {
+        let width = f.size().width;
+        if width > 250 {
+            3
+        } else if width > 200 {
+            2
+         }else if width > 150 {
+            1
+        } else {
+            0
+        }
+    };
+
+    let para = Paragraph::new(format!("{:.*}", percision, app.fps))
+        .block(Block::default()
+               .title(" FPS ")
+               .title_alignment(Alignment::Center)
+               .borders(Borders::ALL)
+               .border_type(BorderType::Rounded)
+        )
+        .style(Style::new().fg(Color::Gray))
+        .alignment(Alignment::Center);
+
     let sections = ["Home", "Counter"]
         .iter()
         .cloned()
@@ -35,7 +63,8 @@ pub fn render(app: &mut App, f: &mut Frame) {
         .divider(" - ")
         .select(app.get_index());
 
-    f.render_widget(tabs, layout[0]);
+    f.render_widget(tabs, bar[0]);
+    f.render_widget(para, bar[1]);
 
     match app.get_index() {
         0 => draw_home(f, app, layout[1]),
@@ -49,7 +78,7 @@ fn draw_home(f: &mut Frame, app: &mut App, area: Rect) {
         .constraints([Constraint::Percentage(30), Constraint::Min(10)])
         .split(area);
 
-    let p = Paragraph::new(format!(" Home Screen "))
+    let p = Paragraph::new(format!(" Home Screen : {:?}", f.size()))
         .wrap(Wrap { trim: true })
         .block(
             Block::default()
