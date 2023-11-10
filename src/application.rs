@@ -1,6 +1,7 @@
 //! Application
 
 use tui_textarea::{TextArea};
+use std::time::Instant;
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{style::Style, widgets::{Borders, Block}};
 
@@ -9,12 +10,27 @@ pub struct App<'a> {
     counter: i64,
     pub index: i64,
     pub home: HomeScreen<'a>,
+    pub fps: f64,
+    pub frames: u32,
+    pub start: Option<Instant>,
     quit: bool,
 }
 
 impl<'a> App<'a> {
     // Tick event of terminal
-    pub fn tick(&self) {}
+    pub fn tick(&mut self) {
+        if self.frames == 0 {
+            self.start = Some(Instant::now());
+        }
+        self.frames += 1;
+        let now = Instant::now();
+        let elapsed = (now - self.start.unwrap_or(Instant::now())).as_secs_f64();
+        if elapsed >= 1.0 {
+            self.fps = self.frames as f64 / elapsed as f64;
+            self.start = Some(now);
+            self.frames = 0;
+        }
+    }
 
     // Getter 
     pub fn get_counter(&self) -> i64 {
