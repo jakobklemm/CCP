@@ -1,9 +1,9 @@
 //! Entry
 
-use serde::{Serialize, Deserialize};
-use uuid::Uuid;
-use polodb_core::bson::doc;
 use crate::config::Config;
+use polodb_core::bson::doc;
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Entry {
@@ -51,16 +51,20 @@ impl Default for Id {
 impl Id {
     fn get_inc() -> Self {
         let col = crate::DATABASE.collection::<Config>("config");
-        let config = col.find_one(doc! {"_id": "CONFIG"}).expect("Unable to find configuration in database.");
-        println!("CONFIG: {:?}", config);
+        let config = col
+            .find_one(doc! {"_id": "CONFIG"})
+            .expect("Unable to find configuration in database.");
         let counter = config.unwrap().counter + 1;
-        let _ = col.update_one(doc! {
-            "_id": "CONFIG",
-        }, doc! {
-            "$set": doc! {
-                "counter": counter
-            }
-        });
+        let _ = col.update_one(
+            doc! {
+                "_id": "CONFIG",
+            },
+            doc! {
+                "$set": doc! {
+                    "counter": counter
+                }
+            },
+        );
         Id(counter)
     }
 }
