@@ -76,8 +76,8 @@ pub fn render(app: &mut App, f: &mut Frame) {
     render_header(f, app, layout[0]);
 
     match &mut app.interface {
-        Interface::Dashboard {..} => render_dashboard(f, app, layout[1]),
-        Interface::Search{..} => render_search(f, app, layout[1]),
+        Interface::Dashboard { .. } => render_dashboard(f, app, layout[1]),
+        Interface::Search { .. } => render_search(f, app, layout[1]),
         Interface::Tags {} => draw_counter(f, app, layout[1]),
         _ => {}
     }
@@ -169,21 +169,27 @@ fn render_search_header(f: &mut Frame, app: &mut App, area: Rect) {
 
     let para = Paragraph::new(format!(" Search: "))
         .style(Style::default().fg(Color::Gray))
-        .block(Block::default().borders(Borders::ALL).border_type(BorderType::Rounded));
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .border_type(BorderType::Rounded),
+        );
 
     match &mut app.interface {
-        Interface::Search{input, ..} => {
+        Interface::Search { input, .. } => {
             input.set_cursor_line_style(Style::default());
-            input.set_block(Block::default().borders(Borders::ALL).border_type(BorderType::Rounded));
+            input.set_block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_type(BorderType::Rounded),
+            );
 
             f.render_widget(para, layout[0]);
             f.render_widget(input.widget(), layout[1]);
         }
-        _ => {
-        }
+        _ => {}
     };
 }
-   
 
 use crate::application::Interface;
 
@@ -191,7 +197,7 @@ fn render_search_list(f: &mut Frame, app: &mut App, area: Rect) {
     let mut items = Vec::new();
     let mut state = ListState::default();
     match &mut app.interface {
-        Interface::Search {input, list} => {
+        Interface::Search { input, list } => {
             items = list.items.clone();
             state = list.state.clone();
         }
@@ -202,8 +208,7 @@ fn render_search_list(f: &mut Frame, app: &mut App, area: Rect) {
         .iter()
         .map(|x| {
             let txt = format!("{} - {} - {} - {:?}", x.key, x.id.0, x.title, x.tags);
-            ListItem::new(txt)
-                .style(Style::default().fg(Color::Gray))
+            ListItem::new(txt).style(Style::default().fg(Color::Gray))
         })
         .collect();
 

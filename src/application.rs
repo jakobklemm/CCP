@@ -1,5 +1,7 @@
 //! Application
 
+use crate::entry::Entry;
+use anyhow::Result;
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::{
     style::Style,
@@ -7,8 +9,6 @@ use ratatui::{
 };
 use std::time::Instant;
 use tui_textarea::TextArea;
-use crate::entry::Entry;
-use anyhow::Result;
 
 #[derive(Debug, Default)]
 pub struct App<'a> {
@@ -24,8 +24,15 @@ pub struct App<'a> {
 
 #[derive(Debug)]
 pub enum Interface {
-    Dashboard { count: u64, tags: u64, size: f64 },
-    Search { input: TextArea<'static>, list: EntryList },
+    Dashboard {
+        count: u64,
+        tags: u64,
+        size: f64,
+    },
+    Search {
+        input: TextArea<'static>,
+        list: EntryList,
+    },
     Import {},
     Tags {},
     People {},
@@ -38,7 +45,7 @@ impl Default for Interface {
         Self::Dashboard {
             count: 0,
             tags: 0,
-            size: 0.0
+            size: 0.0,
         }
     }
 }
@@ -46,7 +53,7 @@ impl Default for Interface {
 #[derive(Debug)]
 pub struct EntryList {
     pub state: ListState,
-    pub items: Vec<Entry>
+    pub items: Vec<Entry>,
 }
 
 impl EntryList {
@@ -61,24 +68,16 @@ impl EntryList {
 
     pub fn next(&mut self) {
         let i = match self.state.selected() {
-            Some(i) => {
-                (i + 1) % self.items.len()
-            }
-            None => {
-                0
-            }
+            Some(i) => (i + 1) % self.items.len(),
+            None => 0,
         };
         self.state.select(Some(i));
     }
 
     pub fn previous(&mut self) {
         let i = match self.state.selected() {
-            Some(i) => {
-                (self.items.len() + i - 1) % self.items.len()
-            }
-            None => {
-                0
-            }
+            Some(i) => (self.items.len() + i - 1) % self.items.len(),
+            None => 0,
         };
         self.state.select(Some(i));
     }
@@ -106,32 +105,34 @@ impl<'a> App<'a> {
 
     pub fn next(&mut self) {
         match &mut self.interface {
-            Interface::Dashboard {count, tags, size} => {
+            Interface::Dashboard { count, tags, size } => {
                 self.interface = Interface::Search {
                     input: TextArea::default(),
                     list: EntryList::new().unwrap(),
                 };
             }
-            Interface::Search {input, list} => {}
-            _ => self.interface = Interface::Tags {}
+            Interface::Search { input, list } => {}
+            _ => self.interface = Interface::Tags {},
         }
     }
 
     pub fn previous(&mut self) {
         match &mut self.interface {
-            Interface::Dashboard {count, tags, size} => {
+            Interface::Dashboard { count, tags, size } => {
                 self.interface = Interface::Tags {};
             }
-            Interface::Search {input, list} => {
+            Interface::Search { input, list } => {
                 self.interface = Interface::Dashboard {
                     count: 0,
                     tags: 0,
-                    size: 0.0
+                    size: 0.0,
                 }
             }
-            _ => self.interface = Interface::Search {
-                input: TextArea::default(),
-                list: EntryList::new().unwrap()
+            _ => {
+                self.interface = Interface::Search {
+                    input: TextArea::default(),
+                    list: EntryList::new().unwrap(),
+                }
             }
         }
     }
@@ -147,9 +148,9 @@ impl<'a> App<'a> {
 
     pub fn get_index(&self) -> usize {
         match self.interface {
-            Interface::Dashboard{..} => 0,
-            Interface::Search{..} => 1,
-            _ => 2
+            Interface::Dashboard { .. } => 0,
+            Interface::Search { .. } => 1,
+            _ => 2,
         }
     }
 

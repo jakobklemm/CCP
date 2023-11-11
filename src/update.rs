@@ -27,7 +27,10 @@ pub fn update(app: &mut App, key: KeyEvent) {
 
 fn handle_other(app: &mut App, key: KeyEvent) {
     match &mut app.interface {
-        Interface::Search{ref mut input, list} => {
+        Interface::Search {
+            ref mut input,
+            list,
+        } => {
             (*input).input(key);
             // TODO: rebuild list
         }
