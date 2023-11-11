@@ -33,10 +33,14 @@ pub enum Interface {
         input: TextArea<'static>,
         list: EntryList,
     },
-    Import {},
+    Import {
+        start: TextArea<'static>,
+        end: TextArea<'static>,
+        title: TextArea<'static>,
+        tags: TextArea<'static>,
+    },
     Tags {},
     People {},
-    Import {},
     Export {},
 }
 
@@ -111,7 +115,14 @@ impl<'a> App<'a> {
                     list: EntryList::new().unwrap(),
                 };
             }
-            Interface::Search { input, list } => {}
+            Interface::Search { input, list } => {
+                self.interface = Interface::Import {
+                    start: TextArea::default(),
+                    end: TextArea::default(),
+                    title: TextArea::default(),
+                    tags: TextArea::default(),
+                }
+            }
             _ => self.interface = Interface::Tags {},
         }
     }
@@ -128,10 +139,18 @@ impl<'a> App<'a> {
                     size: 0.0,
                 }
             }
-            _ => {
+            Interface::Import { .. } => {
                 self.interface = Interface::Search {
                     input: TextArea::default(),
                     list: EntryList::new().unwrap(),
+                }
+            }
+            _ => {
+                self.interface = Interface::Import {
+                    start: TextArea::default(),
+                    end: TextArea::default(),
+                    title: TextArea::default(),
+                    tags: TextArea::default(),
                 }
             }
         }
@@ -150,7 +169,8 @@ impl<'a> App<'a> {
         match self.interface {
             Interface::Dashboard { .. } => 0,
             Interface::Search { .. } => 1,
-            _ => 2,
+            Interface::Import { .. } => 2,
+            _ => 3,
         }
     }
 
