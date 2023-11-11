@@ -1,9 +1,14 @@
 //! Application
 
-use tui_textarea::{TextArea};
-use std::time::Instant;
 use crossterm::event::{KeyCode, KeyEvent};
-use ratatui::{style::Style, widgets::{Borders, Block}};
+use ratatui::{
+    style::Style,
+    widgets::{Block, Borders, List, ListState},
+};
+use std::time::Instant;
+use tui_textarea::TextArea;
+use crate::entry::Entry;
+use anyhow::Result;
 
 #[derive(Debug, Default)]
 pub struct App<'a> {
@@ -13,22 +18,74 @@ pub struct App<'a> {
     pub fps: f64,
     pub frames: u32,
     pub start: Option<Instant>,
+    pub interface: Interface,
     quit: bool,
 }
 
-enum Interface {
-    Dashboard {
-        count: u64,
-        tags: u64,
-        size: f64,
-    },
-    Search {
-        input: TextArea<'static>
-    },
+#[derive(Debug)]
+pub enum Interface {
+    Dashboard { count: u64, tags: u64, size: f64 },
+    Search { input: TextArea<'static>, list: EntryList },
+    Import {},
     Tags {},
     People {},
     Import {},
-    Export {}
+    Export {},
+}
+
+impl Default for Interface {
+    fn default() -> Self {
+        Self::Dashboard {
+            count: 0,
+            tags: 0,
+            size: 0.0
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct EntryList {
+    pub state: ListState,
+    pub items: Vec<Entry>
+}
+
+impl EntryList {
+    pub fn new() -> Result<Self> {
+        let col = crate::DATABASE.collection::<Entry>("entries");
+        let entries: Vec<Entry> = col.find(None)?.filter_map(|x| x.ok()).collect();
+        Ok(Self {
+            state: ListState::default(),
+            items: entries,
+        })
+    }
+
+    pub fn next(&mut self) {
+        let i = match self.state.selected() {
+            Some(i) => {
+                (i + 1) % self.items.len()
+            }
+            None => {
+                0
+            }
+        };
+        self.state.select(Some(i));
+    }
+
+    pub fn previous(&mut self) {
+        let i = match self.state.selected() {
+            Some(i) => {
+                (self.items.len() + i - 1) % self.items.len()
+            }
+            None => {
+                0
+            }
+        };
+        self.state.select(Some(i));
+    }
+
+    fn unselect(&mut self) {
+        self.state.select(None);
+    }
 }
 
 impl<'a> App<'a> {
@@ -47,7 +104,39 @@ impl<'a> App<'a> {
         }
     }
 
-    // Getter 
+    pub fn next(&mut self) {
+        match &mut self.interface {
+            Interface::Dashboard {count, tags, size} => {
+                self.interface = Interface::Search {
+                    input: TextArea::default(),
+                    list: EntryList::new().unwrap(),
+                };
+            }
+            Interface::Search {input, list} => {}
+            _ => self.interface = Interface::Tags {}
+        }
+    }
+
+    pub fn previous(&mut self) {
+        match &mut self.interface {
+            Interface::Dashboard {count, tags, size} => {
+                self.interface = Interface::Tags {};
+            }
+            Interface::Search {input, list} => {
+                self.interface = Interface::Dashboard {
+                    count: 0,
+                    tags: 0,
+                    size: 0.0
+                }
+            }
+            _ => self.interface = Interface::Search {
+                input: TextArea::default(),
+                list: EntryList::new().unwrap()
+            }
+        }
+    }
+
+    // Getter
     pub fn get_counter(&self) -> i64 {
         self.counter
     }
@@ -57,7 +146,11 @@ impl<'a> App<'a> {
     }
 
     pub fn get_index(&self) -> usize {
-        self.index as usize
+        match self.interface {
+            Interface::Dashboard{..} => 0,
+            Interface::Search{..} => 1,
+            _ => 2
+        }
     }
 
     // Quit event
@@ -67,12 +160,22 @@ impl<'a> App<'a> {
 
     // increment
     pub fn increment(&mut self) {
-        self.counter += 1;
+        match &mut self.interface {
+            Interface::Search { input, list } => {
+                list.next();
+            }
+            _ => {}
+        }
     }
 
     // decrement
     pub fn decrement(&mut self) {
-        self.counter -= 1;
+        match &mut self.interface {
+            Interface::Search { input, list } => {
+                list.previous();
+            }
+            _ => {}
+        }
     }
 }
 
@@ -88,7 +191,7 @@ impl<'a> HomeScreen<'a> {
         match self.active % 2 {
             0 => self.first.input(key),
             1 => self.second.input(key),
-            _ => todo!()
+            _ => todo!(),
         };
     }
 }
@@ -108,10 +211,10 @@ impl<'a> Default for HomeScreen<'a> {
                 area.set_block(
                     Block::default()
                         .borders(Borders::ALL)
-                        .title(format!("SECOND Input Box"))
+                        .title(format!("SECOND Input Box")),
                 );
                 area
-            }
+            },
         }
     }
 }

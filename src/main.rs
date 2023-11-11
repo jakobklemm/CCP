@@ -39,6 +39,17 @@ lazy_static! {
 fn main() -> Result<()> {
     util::ensure_configured()?;
 
+    // let elms: Vec<Entry> = (25..32)
+    //     .into_iter()
+    //     .map(|x| {
+    //         Entry::new(format!(" - / {:?} . ", x))
+    //         ListItem::new(format!("{:?}", e)).style(Style::default())
+    //     })
+    //     .collect();
+
+    // let col = DATABASE.collection::<Entry>("entries");
+    // let _ = col.insert_many(elms);
+
     let mut app = App::default();
 
     let term = Terminal::new(CrosstermBackend::new(stderr()))?;
@@ -62,4 +73,3 @@ fn main() -> Result<()> {
 
     Ok(())
 }
-

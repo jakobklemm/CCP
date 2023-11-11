@@ -5,31 +5,39 @@ use polodb_core::bson::doc;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Entry {
-    key: Uuid,
-    id: Id,
-    title: String,
+    pub key: Uuid,
+    pub id: Id,
+    pub title: String,
     // primary key fuckery
-    tags: Vec<Uuid>,
+    pub tags: Vec<Uuid>,
     people: Vec<Uuid>,
     text: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+impl Entry {
+    pub fn new(title: impl ToString) -> Self {
+        let mut e = Entry::default();
+        e.title = title.to_string();
+        e
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Tag {
     key: Uuid,
     name: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Person {
     key: Uuid,
     name: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Id(i64);
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Id(pub i64);
 
 impl Default for Entry {
     fn default() -> Self {
