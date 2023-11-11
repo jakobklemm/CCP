@@ -17,7 +17,11 @@ pub struct App<'a> {
 }
 
 enum Interface {
-    Dashboard,
+    Dashboard {
+        count: u64,
+        tags: u64,
+        size: f64,
+    },
     Search {
         input: TextArea<'static>
     },

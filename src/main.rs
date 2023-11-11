@@ -42,7 +42,7 @@ fn main() -> Result<()> {
     let mut app = App::default();
 
     let term = Terminal::new(CrosstermBackend::new(stderr()))?;
-    let events = handler::EventHandler::new(105);
+    let events = handler::EventHandler::new(100);
     let mut tui = terminal::Terminal::new(term, events);
     tui.enter()?;
 
