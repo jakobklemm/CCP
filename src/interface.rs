@@ -78,9 +78,44 @@ pub fn render(app: &mut App, f: &mut Frame) {
     match &mut app.interface {
         Interface::Dashboard { .. } => render_dashboard(f, app, layout[1]),
         Interface::Search { .. } => render_search(f, app, layout[1]),
+        Interface::Import { .. } => render_import(f, app, layout[1]),
         Interface::Tags {} => draw_counter(f, app, layout[1]),
         _ => {}
     }
+}
+
+fn render_import(f: &mut Frame, app: &mut App, area: Rect) {
+    let zones = Layout::default()
+        .constraints([
+            Constraint::Percentage(25),
+            Constraint::Percentage(50),
+            Constraint::Percentage(25),
+        ])
+        .direction(Direction::Horizontal)
+        .split(area);
+
+    render_import_meta(f, app, zones[0]);
+    render_import_input(f, app, zones[1]);
+    render_import_tags(f, app, zones[2]);
+}
+
+fn render_import_meta(f: &mut Frame, app: &mut App, area: Rect) {
+    f.render_widget(
+        Paragraph::new(format!("METADATA")).block(Block::default().borders(Borders::ALL)),
+        area,
+    );
+}
+fn render_import_input(f: &mut Frame, app: &mut App, area: Rect) {
+    f.render_widget(
+        Paragraph::new(format!("INPUT")).block(Block::default().borders(Borders::ALL)),
+        area,
+    );
+}
+fn render_import_tags(f: &mut Frame, app: &mut App, area: Rect) {
+    f.render_widget(
+        Paragraph::new(format!("TAGS")).block(Block::default().borders(Borders::ALL)),
+        area,
+    );
 }
 
 fn render_dashboard(f: &mut Frame, app: &mut App, area: Rect) {
