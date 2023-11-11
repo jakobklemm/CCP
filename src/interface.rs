@@ -8,18 +8,14 @@ use ratatui::{
     prelude::{Alignment, Frame, Layout},
     style::{Color, Modifier, Style},
     text::Line,
-    widgets::{Block, BorderType, Borders, Paragraph, Tabs, Wrap, block::{title::Title}},
+    widgets::{Block, BorderType, Borders, Paragraph, Tabs, Wrap, block::{title::Title}, List, ListItem, ListState},
 };
 
-pub fn render(app: &mut App, f: &mut Frame) {
-    let layout = Layout::default()
-        .constraints([Constraint::Length(3), Constraint::Percentage(20)])
-        .split(f.size());
-
+pub fn render_header(f: &mut Frame, app: &mut App, area: Rect) {
     let bar = Layout::default()
         .constraints([Constraint::Percentage(96), Constraint::Percentage(4)])
         .direction(Direction::Horizontal)
-        .split(layout[0]);
+        .split(area);
 
         let percision = {
         let width = f.size().width;
@@ -65,12 +61,85 @@ pub fn render(app: &mut App, f: &mut Frame) {
 
     f.render_widget(tabs, bar[0]);
     f.render_widget(para, bar[1]);
+}
+
+pub fn render(app: &mut App, f: &mut Frame) {
+    let layout = Layout::default()
+        .constraints([Constraint::Length(3), Constraint::Min(0)])
+        .split(f.size());
+
+    render_header(f, app, layout[0]);
 
     match app.get_index() {
-        0 => draw_home(f, app, layout[1]),
+        0 => render_dashboard(f, app, layout[1]),
         1 => draw_counter(f, app, layout[1]),
         _ => {},
     }
+}
+
+fn render_dashboard(f: &mut Frame, app: &mut App, area: Rect) {
+    let layout = Layout::default()
+        .constraints([Constraint::Percentage(25), Constraint::Percentage(50), Constraint::Percentage(25)])
+        .direction(Direction::Horizontal)
+        .split(area);
+
+    render_dashboard_left(f, app, layout[0]);
+    render_dashboard_center(f, app, layout[1]);
+    render_dashboard_right(f, app, layout[2]);
+}
+
+fn render_dashboard_left(f: &mut Frame, app: &mut App, area: Rect) {
+    let bars = Layout::default()
+        .constraints([Constraint::Percentage(35), Constraint::Percentage(40), Constraint::Percentage(35)])
+        .direction(Direction::Vertical)
+        .split(area);
+
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded);
+
+    let p = Paragraph::new(format!("LEFT TOP"))
+        .block(block.clone());
+    f.render_widget(p, bars[0]);
+
+    let p = Paragraph::new(format!("LEFT BOTTOM"))
+        .block(block.clone());
+    f.render_widget(p, bars[2]);
+}
+
+fn render_dashboard_center(f: &mut Frame, app: &mut App, area: Rect) {
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded);
+
+    let style = Style::default()
+        .fg(Color::Yellow);
+
+    let para = Paragraph::new("Some center text stuff \n This is text.")
+        .block(block)
+        .style(style)
+        .alignment(Alignment::Center);
+
+    f.render_widget(para, area);
+}
+
+fn render_dashboard_right(f: &mut Frame, app: &mut App, area: Rect) {
+    let items: Vec<ListItem> = (1..15)
+        .into_iter()
+        .map(|x| {
+             let t = format!(" - {:?} _ - _", x);
+             ListItem::new(t).style(Style::default().fg(Color::Black).bg(Color::White))
+        }
+        )
+        .collect();
+
+    let list = List::new(items)
+        .block(Block::default().title(" - Tags -").borders(Borders::ALL))
+        .style(Style::default().fg(Color::White))
+        .highlight_style(Style::default().add_modifier(Modifier::ITALIC))
+        .highlight_symbol(">");
+
+    f.render_widget(list, area);
 }
 
 fn draw_home(f: &mut Frame, app: &mut App, area: Rect) {
