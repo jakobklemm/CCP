@@ -79,9 +79,17 @@ pub fn render(app: &mut App, f: &mut Frame) {
         Interface::Dashboard { .. } => render_dashboard(f, app, layout[1]),
         Interface::Search { .. } => render_search(f, app, layout[1]),
         Interface::Import { .. } => render_import(f, app, layout[1]),
-        Interface::Tags {} => draw_counter(f, app, layout[1]),
+        Interface::Execute { .. } => render_execute(f, app, layout[1]),
+        Interface::Export {} => draw_counter(f, app, layout[1]),
         _ => {}
     }
+}
+
+fn render_execute(f: &mut Frame, app: &mut App, area: Rect) {
+    f.render_widget(
+        Paragraph::new(format!("EXECUTE")).block(Block::default().borders(Borders::ALL)),
+        area,
+    )
 }
 
 fn render_import(f: &mut Frame, app: &mut App, area: Rect) {
