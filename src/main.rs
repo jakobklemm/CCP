@@ -14,7 +14,8 @@ mod util;
 
 use crate::handler::Event;
 
-use crate::processor::{Job, Timestamp, Status};
+use crate::entry::Id;
+use crate::processor::{Job, Status, Timestamp};
 use application::App;
 use config::Config;
 use crossterm::event::{self, KeyCode, KeyEventKind};
@@ -46,38 +47,39 @@ fn main() -> Result<()> {
     //         ListItem::new(format!("{:?}", e)).style(Style::default())
     //     })
     //     .collect();
-
     // let col = DATABASE.collection::<Entry>("entries");
     // let _ = col.insert_many(elms);
 
-    // let mut app = App::default();
+    let mut app = App::default();
 
-    // let term = Terminal::new(CrosstermBackend::new(stderr()))?;
-    // let events = handler::EventHandler::new(100);
-    // let mut tui = terminal::Terminal::new(term, events);
-    // tui.enter()?;
+    let term = Terminal::new(CrosstermBackend::new(stderr()))?;
+    let events = handler::EventHandler::new(100);
+    let mut tui = terminal::Terminal::new(term, events);
+    tui.enter()?;
 
-    // while !app.should_quit() {
-    //     tui.draw(&mut app)?;
-    //     match tui.events.next()? {
-    //         Event::Tick => {
-    //             app.tick();
-    //         }
-    //         Event::Key(event) => update::update(&mut app, event),
-    //         Event::Mouse(_m) => {}
-    //         Event::Resize(_, _) => {}
-    //     }
-    // }
+    while !app.should_quit() {
+        tui.draw(&mut app)?;
+        match tui.events.next()? {
+            Event::Tick => {
+                app.tick();
+            }
+            Event::Key(event) => update::update(&mut app, event),
+            Event::Mouse(_m) => {}
+            Event::Resize(_, _) => {}
+        }
+    }
 
-    // tui.exit()?;
+    tui.exit()?;
 
-    let job = Job::new("00:00:20", "00:01:35", "test.mp4", "rs.mp4").unwrap();
+    let job = Job::new("00:00:20", "00:01:35", "test.mp4", Id(45)).unwrap();
     let s = job.execute();
 
     while true {
         match s.recv().unwrap() {
-            Status::Progress(p) => println!("Progress: {}", p),
+            Status::Media(p) => println!("FFMPGE: {}", p),
+            Status::Text(p) => println!("TXT: {}", p),
             Status::Completed(r) => {
+                println!("transcript: {:?}", r);
                 break;
             }
         }

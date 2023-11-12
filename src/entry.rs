@@ -1,6 +1,7 @@
 //! Entry
 
 use crate::config::Config;
+use anyhow::Result;
 use polodb_core::bson::doc;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -58,7 +59,29 @@ impl Default for Id {
     }
 }
 
+use crate::ROOT;
+use std::fs;
+
 impl Id {
+    pub fn temp_path(&self) -> Result<String> {
+        fs::create_dir_all(format!("{}/temp/{}/", ROOT.as_str(), self.0))?;
+        Ok(format!("{}temp/{}/pass_1.mp4", ROOT.as_str(), self.0))
+    }
+
+    pub fn temp_dir(&self) -> String {
+        format!("{}temp/{}/", ROOT.as_str(), self.0)
+    }
+
+    pub fn transcript(&self) -> String {
+        format!("{}temp/{}/pass_1.txt", ROOT.as_str(), self.0)
+    }
+
+    pub fn out_path(&self) -> Result<String> {
+        let s = self.0 / 100;
+        fs::create_dir_all(format!("{}/store/{}/", ROOT.as_str(), s))?;
+        Ok(format!("{}/store/{}/{}.mp4", ROOT.as_str(), s, self.0))
+    }
+
     fn get_inc() -> Self {
         let col = crate::DATABASE.collection::<Config>("config");
         let config = col
