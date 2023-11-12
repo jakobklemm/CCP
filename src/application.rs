@@ -39,8 +39,7 @@ pub enum Interface {
         title: TextArea<'static>,
         tags: TextArea<'static>,
     },
-    Tags {},
-    People {},
+    Execute {},
     Export {},
 }
 
@@ -123,14 +122,22 @@ impl<'a> App<'a> {
                     tags: TextArea::default(),
                 }
             }
-            _ => self.interface = Interface::Tags {},
+            Interface::Import { .. } => self.interface = Interface::Execute {},
+            Interface::Execute { .. } => self.interface = Interface::Export {},
+            Interface::Export { .. } => {
+                self.interface = Interface::Dashboard {
+                    count: 0,
+                    tags: 0,
+                    size: 0.0,
+                }
+            }
         }
     }
 
     pub fn previous(&mut self) {
         match &mut self.interface {
             Interface::Dashboard { count, tags, size } => {
-                self.interface = Interface::Tags {};
+                self.interface = Interface::Export {};
             }
             Interface::Search { input, list } => {
                 self.interface = Interface::Dashboard {
@@ -145,7 +152,7 @@ impl<'a> App<'a> {
                     list: EntryList::new().unwrap(),
                 }
             }
-            _ => {
+            Interface::Execute { .. } => {
                 self.interface = Interface::Import {
                     start: TextArea::default(),
                     end: TextArea::default(),
@@ -153,6 +160,7 @@ impl<'a> App<'a> {
                     tags: TextArea::default(),
                 }
             }
+            Interface::Export { .. } => self.interface = Interface::Execute {},
         }
     }
 
@@ -170,7 +178,8 @@ impl<'a> App<'a> {
             Interface::Dashboard { .. } => 0,
             Interface::Search { .. } => 1,
             Interface::Import { .. } => 2,
-            _ => 3,
+            Interface::Execute { .. } => 3,
+            Interface::Export { .. } => 4,
         }
     }
 

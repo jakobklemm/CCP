@@ -71,19 +71,19 @@ fn main() -> Result<()> {
 
     tui.exit()?;
 
-    let job = Job::new("00:00:20", "00:01:35", "test.mp4", Id(45)).unwrap();
-    let s = job.execute();
+    // let job = Job::new("00:00:20", "00:01:35", "test.mp4", Id(45)).unwrap();
+    // let s = job.execute();
 
-    while true {
-        match s.recv().unwrap() {
-            Status::Media(p) => println!("FFMPGE: {}", p),
-            Status::Text(p) => println!("TXT: {}", p),
-            Status::Completed(r) => {
-                println!("transcript: {:?}", r);
-                break;
-            }
-        }
-    }
+    // while true {
+    //     match s.recv().unwrap() {
+    //         Status::Media(p) => println!("FFMPGE: {}", p),
+    //         Status::Text(p) => println!("TXT: {}", p),
+    //         Status::Completed(r) => {
+    //             println!("transcript: {:?}", r);
+    //             break;
+    //         }
+    //     }
+    // }
 
     Ok(())
 }
