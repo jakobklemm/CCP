@@ -29,7 +29,7 @@ impl ToString for Language {
     fn to_string(&self) -> String {
         match self {
             Language::EN => String::from("German"),
-            Language::DE => String::from("Language")
+            Language::DE => String::from("Language"),
         }
     }
 }
