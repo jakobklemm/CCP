@@ -1,5 +1,6 @@
 //! Processor
 
+use crate::entry::Id;
 use std::io::{BufRead, BufReader};
 use std::process::{Command, Stdio};
 use std::sync::mpsc::{channel, Receiver, Sender};
@@ -14,7 +15,7 @@ pub struct Job {
     start: Timestamp,
     end: Timestamp,
     input: String,
-    output: String,
+    output: Id,
     language: Language,
 }
 
@@ -24,14 +25,23 @@ pub enum Language {
     DE,
 }
 
+impl ToString for Language {
+    fn to_string(&self) -> String {
+        match self {
+            Language::EN => String::from("German"),
+            Language::DE => String::from("Language")
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Report {
-    transcript: String,
+    transcript: Vec<String>,
     size: f64,
 }
 
 impl Report {
-    fn new(path: String, transcript: String) -> Result<Self> {
+    fn new(path: String, transcript: Vec<String>) -> Result<Self> {
         // TODO: get size
         Ok(Self {
             transcript,
@@ -42,23 +52,26 @@ impl Report {
 
 pub enum Status {
     /// Has to be between 0 and 100
-    Progress(i32),
+    Media(i32),
+    Text(i32),
     Completed(Box<Report>),
 }
+
+use std::time::Duration;
 
 impl Job {
     pub fn new(
         start: impl ToString,
         end: impl ToString,
         input: impl ToString,
-        output: impl ToString,
+        output: Id,
     ) -> Option<Self> {
         Some(Self {
             key: Uuid::new_v4(),
             start: Timestamp::from_str(start)?,
             end: Timestamp::from_str(end)?,
             input: input.to_string(),
-            output: output.to_string(),
+            output,
             language: Language::default(),
         })
     }
@@ -70,65 +83,104 @@ impl Job {
     pub fn execute(self) -> Receiver<Status> {
         let (snd, recv) = channel();
         let _ = thread::spawn(move || {
-            let _ = snd.send(Status::Progress(0)).unwrap();
-
-            let duration = self.end - self.start;
-
-            let pipe = Stdio::piped();
-            let err = Stdio::piped();
-
-            let mut cmd = Command::new("ffmpeg")
-                .arg("-hide_banner")
-                .arg("-v")
-                .arg("quiet")
-                .arg("-stats")
-                .arg("-ss")
-                .arg(self.start.clone().to_string())
-                .arg("-i")
-                .arg(self.input)
-                .arg("-c:v")
-                .arg("copy")
-                .arg("-c:a")
-                .arg("aac")
-                .arg("-filter_complex")
-                .arg("amerge=inputs=2")
-                .arg("-crf")
-                .arg("10")
-                .arg("-to")
-                .arg(self.end.clone().to_string())
-                .arg("-progress")
-                .arg("/dev/stdout")
-                .arg(self.output)
-                .stdout(pipe)
-                .stderr(err)
-                .spawn()
-                .unwrap();
-
-            let stdout = cmd.stdout.as_mut().unwrap();
-            let reader = BufReader::new(stdout);
-            let lines = reader.lines();
-
-            for line in lines {
-                let times = match get_timestamp(line.unwrap()) {
-                    Some(t) => t,
-                    None => String::new(),
-                };
-                if let Some(ts) = Timestamp::from_str(times) {
-                    let curr = ts - self.start;
-                    let perc = curr / duration;
-                    // println!("PROGRESS: {:?}", perc);
-                    let s = Status::Progress(parse_percentage(perc));
-                    let _ = snd.send(s).unwrap();
+            if self.first_pass(snd.clone()) {
+                if let Ok(rep) = self.second_pass(snd.clone()) {
+                    let _ = snd.send(Status::Completed(Box::new(rep))).unwrap();
                 }
             }
-
-            cmd.wait().unwrap();
-            let t = String::from("-");
-            let e = String::from("_");
-            let s = Status::Completed(Box::new(Report::new(e, t).unwrap()));
-            let _ = snd.send(s).unwrap();
         });
         recv
+    }
+
+    fn second_pass(&self, snd: Sender<Status>) -> Result<Report> {
+        let _ = snd.send(Status::Text(0)).unwrap();
+
+        let mut cmd = Command::new("whisper")
+            .arg(self.output.temp_path().unwrap())
+            .arg("--language")
+            .arg("German")
+            .arg("--model")
+            .arg("medium")
+            .arg("-o")
+            .arg(self.output.temp_dir())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .unwrap();
+
+        let stdout = cmd.stdout.as_mut().unwrap();
+        let reader = BufReader::new(stdout);
+        let lines = reader.lines();
+
+        for (i, line) in lines.enumerate() {
+            // println!("LINE: {:?}", line);
+            let _ = snd.send(Status::Text(i as i32)).unwrap();
+        }
+
+        let f: Vec<String> = std::fs::read_to_string(self.output.transcript())
+            .unwrap()
+            .split("\n")
+            .map(String::from)
+            .collect();
+
+        Ok(Report::new(String::new(), f).unwrap())
+    }
+
+    fn first_pass(&self, snd: Sender<Status>) -> bool {
+        let _ = snd.send(Status::Media(0)).unwrap();
+
+        let duration = self.end - self.start;
+
+        let pipe = Stdio::piped();
+        let err = Stdio::piped();
+
+        let mut cmd = Command::new("ffmpeg")
+            .arg("-hide_banner")
+            .arg("-v")
+            .arg("quiet")
+            .arg("-stats")
+            .arg("-ss")
+            .arg(self.start.clone().to_string())
+            .arg("-i")
+            .arg(self.input.clone())
+            .arg("-c:v")
+            .arg("copy")
+            .arg("-c:a")
+            .arg("aac")
+            .arg("-filter_complex")
+            .arg("amerge=inputs=2")
+            .arg("-crf")
+            .arg("10")
+            .arg("-to")
+            .arg(self.end.clone().to_string())
+            .arg("-progress")
+            .arg("/dev/stdout")
+            .arg(self.output.temp_path().unwrap())
+            .stdout(pipe)
+            .stderr(err)
+            .spawn()
+            .unwrap();
+
+        let stdout = cmd.stdout.as_mut().unwrap();
+        let reader = BufReader::new(stdout);
+        let lines = reader.lines();
+
+        for line in lines {
+            let times = match get_timestamp(line.unwrap()) {
+                Some(t) => t,
+                None => String::new(),
+            };
+            if let Some(ts) = Timestamp::from_str(times) {
+                let curr = ts - self.start;
+                let perc = curr / duration;
+                // println!("PROGRESS: {:?}", perc);
+                let s = Status::Media(parse_percentage(perc));
+                let _ = snd.send(s).unwrap();
+            }
+        }
+
+        let code = cmd.wait().unwrap();
+        code.success()
     }
 }
 
