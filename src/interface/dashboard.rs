@@ -30,7 +30,7 @@ impl Default for Dashboard {
 }
 
 impl Render for Dashboard {
-    fn render(&self, f: &mut Frame, area: Rect) {
+    fn render(&mut self, f: &mut Frame, area: Rect) {
         let thirds = Layout::default()
             .constraints([
                 Constraint::Percentage(30),
@@ -40,9 +40,9 @@ impl Render for Dashboard {
             .direction(Direction::Horizontal)
             .split(area);
 
-        Self::render_overview(&self, f, thirds[0]);
-        Self::render_center(&self, f, thirds[1]);
-        Self::render_tags(&self, f, thirds[2]);
+        Self::render_overview(self, f, thirds[0]);
+        Self::render_center(self, f, thirds[1]);
+        Self::render_tags(self, f, thirds[2]);
     }
 
     /// Dashboard isn't interactive
@@ -50,7 +50,7 @@ impl Render for Dashboard {
 }
 
 impl Dashboard {
-    fn render_tags(&self, f: &mut Frame, area: Rect) {
+    fn render_tags(&mut self, f: &mut Frame, area: Rect) {
         // TODO: Fetch tags
         f.render_widget(
             Paragraph::new("TODO".to_string()).block(Block::default().borders(Borders::ALL)),
@@ -58,7 +58,11 @@ impl Dashboard {
         );
     }
 
-    fn render_center(&self, f: &mut Frame, area: Rect) {
+    fn render_center(&mut self, f: &mut Frame, area: Rect) {
+        let layout = Layout::default()
+            .constraints([Constraint::Percentage(70), Constraint::Min(0)])
+            .split(area);
+
         let around = Block::default()
             .title(" DASHBOARD ")
             .title_alignment(Alignment::Center)
@@ -70,12 +74,15 @@ impl Dashboard {
         let para = Paragraph::new(cont)
             .style(Style::default().fg(Color::Yellow))
             .alignment(Alignment::Center)
-            .block(around);
+            .block(around.clone());
 
-        f.render_widget(para, area);
+        let lower = Paragraph::new("Bar charts").block(around);
+
+        f.render_widget(para, layout[0]);
+        f.render_widget(lower, layout[1]);
     }
 
-    fn render_overview(&self, f: &mut Frame, area: Rect) {
+    fn render_overview(&mut self, f: &mut Frame, area: Rect) {
         let thirds = Layout::default()
             .constraints([
                 Constraint::Percentage(33),

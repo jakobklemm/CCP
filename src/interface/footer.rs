@@ -13,7 +13,7 @@ use ratatui::{
 pub struct Footer {}
 
 impl Render for Footer {
-    fn render(&self, f: &mut Frame, area: Rect) {
+    fn render(&mut self, f: &mut Frame, area: Rect) {
         let outer = Block::default()
             .title(Title::from(" Footer ").alignment(Alignment::Left))
             .border_type(BorderType::Rounded)

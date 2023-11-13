@@ -15,7 +15,7 @@ pub struct Import {
 }
 
 impl Render for Import {
-    fn render(&self, f: &mut Frame, area: Rect) {}
+    fn render(&mut self, f: &mut Frame, area: Rect) {}
 
     /// TODO: Handle inner swap to lower block
     fn input(&mut self, key: KeyEvent) {
