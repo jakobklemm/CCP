@@ -4,6 +4,7 @@ use crate::config::Config;
 use anyhow::Result;
 use polodb_core::bson::doc;
 use serde::{Deserialize, Serialize};
+use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -11,10 +12,9 @@ pub struct Entry {
     pub key: Uuid,
     pub id: Id,
     pub title: String,
-    // primary key fuckery
+    pub date: u64,
     pub tags: Vec<Uuid>,
-    people: Vec<Uuid>,
-    text: String,
+    pub text: String,
 }
 
 impl Entry {
@@ -42,12 +42,16 @@ pub struct Id(pub i64);
 
 impl Default for Entry {
     fn default() -> Self {
+        let start = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("Invalid system time!");
+
         Self {
             key: Uuid::new_v4(),
             id: Id::default(),
             title: String::from("TITLE MISSING"),
+            date: start.as_secs(),
             tags: Vec::new(),
-            people: Vec::new(),
             text: String::new(),
         }
     }

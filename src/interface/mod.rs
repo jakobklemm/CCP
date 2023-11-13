@@ -52,7 +52,7 @@ impl Interface {
             State::Import(_) => State::Execute(Execute::default()),
             State::Execute(_) => State::Settings(Settings::default()),
             State::Settings(_) => State::Dashboard(Dashboard::default()),
-        }
+        };
     }
 
     pub fn previous(&mut self) {
@@ -63,7 +63,7 @@ impl Interface {
             State::Import(_) => State::Search(Search::default()),
             State::Execute(_) => State::Execute(Execute::default()),
             State::Settings(_) => State::Execute(Execute::default()),
-        }
+        };
     }
 
     pub fn tick(&mut self) {
@@ -87,7 +87,7 @@ impl State {
 }
 
 impl Render for Interface {
-    fn render(&self, f: &mut Frame, area: Rect) {
+    fn render(&mut self, f: &mut Frame, area: Rect) {
         if area.width <= 85 {
             f.render_widget(
                 Paragraph::new("Unable to display, please increase size.")
@@ -109,14 +109,17 @@ impl Render for Interface {
         self.state.render(f, layout[1]);
         self.footer.render(f, layout[2]);
     }
-    fn input(&mut self, _key: KeyEvent) {}
+
+    fn input(&mut self, key: KeyEvent) {
+        self.state.input(key);
+    }
 }
 
 impl Render for State {
-    fn render(&self, f: &mut Frame, area: Rect) {
+    fn render(&mut self, f: &mut Frame, area: Rect) {
         match self {
             State::Dashboard(d) => d.render(f, area),
-            State::Search(s) => todo!(),
+            State::Search(s) => s.render(f, area),
             State::Import(_) => todo!(),
             State::Execute(_) => todo!(),
             State::Settings(_) => todo!(),
@@ -124,7 +127,13 @@ impl Render for State {
     }
 
     fn input(&mut self, key: KeyEvent) {
-        todo!()
+        match self {
+            State::Dashboard(d) => d.input(key),
+            State::Search(s) => s.input(key),
+            State::Import(_) => todo!(),
+            State::Execute(_) => todo!(),
+            State::Settings(_) => todo!(),
+        }
     }
 }
 
@@ -146,12 +155,10 @@ impl Default for State {
 
 /// Workaroud trait instead of Widget
 pub trait Render {
-    fn render(&self, f: &mut Frame, area: Rect);
+    fn render(&mut self, f: &mut Frame, area: Rect);
     fn input(&mut self, key: KeyEvent);
 }
 
 pub fn render(app: &mut App, f: &mut Frame) {
-    let inter = Interface::default();
-    inter.render(f, f.size());
-    // TODO: Render interface from App
+    app.ui.render(f, f.size());
 }

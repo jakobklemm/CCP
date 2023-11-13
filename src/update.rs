@@ -1,6 +1,6 @@
 //! Update
 
-use crate::application::{App, Interface};
+use crate::application::App;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 pub fn update(app: &mut App, key: KeyEvent) {
@@ -11,33 +11,19 @@ pub fn update(app: &mut App, key: KeyEvent) {
                 app.quit();
             }
         }
-        KeyCode::Char('j') if control(&key) => app.increment(),
-        KeyCode::Char('k') if control(&key) => app.decrement(),
+        // KeyCode::Char('j') if control(&key) => app.increment(),
+        // KeyCode::Char('k') if control(&key) => app.decrement(),
         KeyCode::Char('l') if control(&key) => app.next(),
         KeyCode::Char('h') if control(&key) => app.previous(),
         KeyCode::Tab => {
-            app.home.active = (app.home.active + 1) % 2;
+            // app.home.active = (app.home.active + 1) % 2;
         }
         _ => {
-            //app.home.handle(key);
-            handle_other(app, key);
+            app.input(key);
         }
     }
 }
 
-fn handle_other(app: &mut App, key: KeyEvent) {
-    match &mut app.interface {
-        Interface::Search {
-            ref mut input,
-            list,
-        } => {
-            (*input).input(key);
-            // TODO: rebuild list
-        }
-        _ => {}
-    }
-}
-
-fn control(key: &KeyEvent) -> bool {
+pub fn control(key: &KeyEvent) -> bool {
     key.modifiers == KeyModifiers::CONTROL
 }

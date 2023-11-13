@@ -21,7 +21,7 @@ pub struct Header {
 }
 
 impl Render for Header {
-    fn render(&self, f: &mut Frame, area: Rect) {
+    fn render(&mut self, f: &mut Frame, area: Rect) {
         let bar = Layout::default()
             .constraints([Constraint::Percentage(94), Constraint::Percentage(4)])
             .direction(Direction::Horizontal)
@@ -104,18 +104,11 @@ impl Header {
 
         let tabs = Tabs::new(sections)
             .block(outer)
-            .style(Style::default().fg(Color::Red).add_modifier(Modifier::BOLD))
+            .style(Style::default().fg(Color::Red))
+            .highlight_style(Style::default().add_modifier(Modifier::BOLD))
             .divider(" | ")
-            .select(self.get_selected());
+            .select(self.selected.try_into().unwrap_or(0));
 
         f.render_widget(tabs, area);
-    }
-
-    fn get_selected(&self) -> usize {
-        if self.selected > 0 {
-            self.selected as usize
-        } else {
-            0
-        }
     }
 }
