@@ -1,11 +1,13 @@
 //! # Interface
 //!
 
-use crate::application::{App, EntryList};
+use crate::application::App;
 use crossterm::event::KeyEvent;
 use ratatui::{
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Direction, Layout, Rect},
     prelude::Frame,
+    style::{Color, Style},
+    widgets::Paragraph,
 };
 use tui_textarea::TextArea as TuiTextArea;
 
@@ -44,10 +46,28 @@ pub struct Interface {
 impl Interface {
     pub fn next(&mut self) {
         self.header.next();
+        self.state = match self.state {
+            State::Dashboard(_) => State::Search(Search::default()),
+            State::Search(_) => State::Import(Import::default()),
+            State::Import(_) => State::Execute(Execute::default()),
+            State::Execute(_) => State::Settings(Settings::default()),
+            State::Settings(_) => State::Dashboard(Dashboard::default()),
+        }
     }
 
     pub fn previous(&mut self) {
         self.header.previous();
+        self.state = match self.state {
+            State::Dashboard(_) => State::Settings(Settings::default()),
+            State::Search(_) => State::Dashboard(Dashboard::default()),
+            State::Import(_) => State::Search(Search::default()),
+            State::Execute(_) => State::Execute(Execute::default()),
+            State::Settings(_) => State::Execute(Execute::default()),
+        }
+    }
+
+    pub fn tick(&mut self) {
+        self.header.tick();
     }
 }
 
@@ -60,8 +80,22 @@ pub enum State {
     Settings(Settings),
 }
 
+impl State {
+    pub fn get_states() -> [&'static str; STATES as usize] {
+        ["Dashboard", "Search", "Import", "Execute", "Settings"]
+    }
+}
+
 impl Render for Interface {
     fn render(&self, f: &mut Frame, area: Rect) {
+        if area.width <= 85 {
+            f.render_widget(
+                Paragraph::new("Unable to display, please increase size.")
+                    .style(Style::default().fg(Color::Red)),
+                area,
+            );
+            return;
+        }
         let layout = Layout::default()
             .constraints([
                 Constraint::Length(3),
@@ -69,11 +103,45 @@ impl Render for Interface {
                 Constraint::Length(3),
             ])
             .direction(Direction::Vertical)
-            .split(f.size());
+            .split(area);
 
         self.header.render(f, layout[0]);
+        self.state.render(f, layout[1]);
+        self.footer.render(f, layout[2]);
     }
-    fn input(&mut self, key: KeyEvent) {}
+    fn input(&mut self, _key: KeyEvent) {}
+}
+
+impl Render for State {
+    fn render(&self, f: &mut Frame, area: Rect) {
+        match self {
+            State::Dashboard(d) => d.render(f, area),
+            State::Search(s) => todo!(),
+            State::Import(_) => todo!(),
+            State::Execute(_) => todo!(),
+            State::Settings(_) => todo!(),
+        }
+    }
+
+    fn input(&mut self, key: KeyEvent) {
+        todo!()
+    }
+}
+
+impl Default for Interface {
+    fn default() -> Self {
+        Self {
+            header: Default::default(),
+            footer: Default::default(),
+            state: Default::default(),
+        }
+    }
+}
+
+impl Default for State {
+    fn default() -> Self {
+        Self::Dashboard(Dashboard::default())
+    }
 }
 
 /// Workaroud trait instead of Widget
@@ -83,9 +151,7 @@ pub trait Render {
 }
 
 pub fn render(app: &mut App, f: &mut Frame) {
-    let layout = Layout::default()
-        .constraints([Constraint::Min(0)])
-        .split(f.size());
-
+    let inter = Interface::default();
+    inter.render(f, f.size());
     // TODO: Render interface from App
 }

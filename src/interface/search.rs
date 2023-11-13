@@ -10,8 +10,26 @@ pub struct Search {
     list: EntryList,
 }
 
+impl Default for Search {
+    fn default() -> Self {
+        Self {
+            input: Default::default(),
+            list: Default::default(),
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct EntryList {
     state: ListState,
     items: Vec<Entry>,
+}
+
+impl Default for EntryList {
+    fn default() -> Self {
+        Self {
+            state: Default::default(),
+            items: Default::default(),
+        }
+    }
 }

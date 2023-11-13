@@ -5,10 +5,6 @@ use crate::handler::EventHandler;
 use crate::interface;
 use crate::util;
 use anyhow::Result;
-use crossterm::{
-    event::{DisableMouseCapture, EnableMouseCapture},
-    terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
-};
 use std::panic;
 
 pub type CrosstermTerminal = ratatui::Terminal<ratatui::backend::CrosstermBackend<std::io::Stderr>>;
@@ -26,7 +22,7 @@ impl Terminal {
     pub fn enter(&mut self) -> Result<()> {
         util::terminal_startup()?;
         // let hook = panic::take_hook;
-        panic::set_hook(Box::new(move |panic| {
+        panic::set_hook(Box::new(move |_panic| {
             let _ = util::terminal_shutdown();
             // questionable
             // hook(panic);
