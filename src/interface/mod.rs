@@ -121,7 +121,7 @@ impl Render for State {
             State::Dashboard(d) => d.render(f, area),
             State::Search(s) => s.render(f, area),
             State::Import(i) => i.render(f, area),
-            State::Execute(_) => todo!(),
+            State::Execute(e) => e.render(f, area),
             State::Settings(_) => todo!(),
         }
     }
@@ -131,7 +131,7 @@ impl Render for State {
             State::Dashboard(d) => d.input(key),
             State::Search(s) => s.input(key),
             State::Import(i) => i.input(key),
-            State::Execute(_) => todo!(),
+            State::Execute(e) => e.input(key),
             State::Settings(_) => todo!(),
         }
     }

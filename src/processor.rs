@@ -8,8 +8,9 @@ use std::thread;
 use uuid::Uuid;
 
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Job {
     key: Uuid,
     start: Timestamp,
@@ -19,10 +20,19 @@ pub struct Job {
     language: Language,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Language {
     EN,
     DE,
+}
+
+impl Language {
+    fn from_str(s: &str) -> Language {
+        match s {
+            "en" => Self::EN,
+            _ => Self::DE,
+        }
+    }
 }
 
 impl ToString for Language {
@@ -34,7 +44,7 @@ impl ToString for Language {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Report {
     transcript: Vec<String>,
     size: f64,
@@ -56,8 +66,6 @@ pub enum Status {
     Text(i32),
     Completed(Box<Report>),
 }
-
-use std::time::Duration;
 
 impl Job {
     pub fn new(
@@ -188,7 +196,7 @@ fn parse_percentage(perc: f32) -> i32 {
     (perc * 100.0) as i32
 }
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]
 pub struct Timestamp {
     hours: i32,
     minutes: i32,
