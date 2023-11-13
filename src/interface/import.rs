@@ -28,3 +28,15 @@ impl Render for Import {
         };
     }
 }
+
+impl Default for Import {
+    fn default() -> Self {
+        Self {
+            current: Default::default(),
+            start: Default::default(),
+            end: Default::default(),
+            title: Default::default(),
+            selector: Default::default(),
+        }
+    }
+}
