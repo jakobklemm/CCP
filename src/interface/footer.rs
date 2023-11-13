@@ -21,7 +21,7 @@ impl Render for Footer {
             .style(Style::default().fg(Color::LightRed));
 
         let cont = format!(
-            " Use <C-h> and <C-l> to switch between tabs, use <tab> and <TAB> to navigate inside."
+            " Use <C-h> and <C-l> to switch between tabs, use <RETURN> and <return> to navigate inside."
         );
         let p = Paragraph::new(cont)
             .block(outer)

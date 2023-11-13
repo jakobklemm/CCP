@@ -40,6 +40,14 @@ lazy_static! {
 fn main() -> Result<()> {
     util::ensure_configured()?;
 
+    let col = DATABASE.collection::<Entry>("entries");
+    let elms: Vec<Entry> = (1..100)
+        .into_iter()
+        .map(|x| Entry::new(format!("fkjakfs  {}", x)))
+        .collect();
+
+    let _ = col.insert_many(elms);
+
     let mut app = App::default();
 
     let term = Terminal::new(CrosstermBackend::new(stderr()))?;

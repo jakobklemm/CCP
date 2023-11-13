@@ -120,7 +120,7 @@ impl Render for State {
         match self {
             State::Dashboard(d) => d.render(f, area),
             State::Search(s) => s.render(f, area),
-            State::Import(_) => todo!(),
+            State::Import(i) => i.render(f, area),
             State::Execute(_) => todo!(),
             State::Settings(_) => todo!(),
         }
@@ -130,7 +130,7 @@ impl Render for State {
         match self {
             State::Dashboard(d) => d.input(key),
             State::Search(s) => s.input(key),
-            State::Import(_) => todo!(),
+            State::Import(i) => i.input(key),
             State::Execute(_) => todo!(),
             State::Settings(_) => todo!(),
         }
