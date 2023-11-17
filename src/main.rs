@@ -1,12 +1,14 @@
 // Main
 
 use anyhow::Result;
+use metadata::Metadata;
 
 mod application;
 mod config;
 mod entry;
 mod handler;
 mod interface;
+mod metadata;
 mod processor;
 mod terminal;
 mod update;
@@ -40,13 +42,14 @@ lazy_static! {
 fn main() -> Result<()> {
     util::ensure_configured()?;
 
-    let col = DATABASE.collection::<Entry>("entries");
-    let elms: Vec<Entry> = (1..100)
-        .into_iter()
-        .map(|x| Entry::new(format!("fkjakfs  {}", x)))
-        .collect();
-
-    let _ = col.insert_many(elms);
+    // let col = DATABASE.collection::<Entry>("entries");
+    // let elms: Vec<Entry> = (1..100)
+    //     .into_iter()
+    //     .map(|x| Entry::new(format!("fkjakfs  {}", x)))
+    //     .collect();
+    //
+    // let _ = col.insert_many(elms);
+    //
 
     let mut app = App::default();
 
