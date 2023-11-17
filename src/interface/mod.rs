@@ -61,7 +61,7 @@ impl Interface {
             State::Dashboard(_) => State::Settings(Settings::default()),
             State::Search(_) => State::Dashboard(Dashboard::default()),
             State::Import(_) => State::Search(Search::default()),
-            State::Execute(_) => State::Execute(Execute::default()),
+            State::Execute(_) => State::Import(Import::default()),
             State::Settings(_) => State::Execute(Execute::default()),
         };
     }
@@ -88,7 +88,7 @@ impl State {
 
 impl Render for Interface {
     fn render(&mut self, f: &mut Frame, area: Rect) {
-        if area.width <= 85 {
+        if area.width <= 100 {
             f.render_widget(
                 Paragraph::new("Unable to display, please increase size.")
                     .style(Style::default().fg(Color::Red)),
@@ -122,7 +122,7 @@ impl Render for State {
             State::Search(s) => s.render(f, area),
             State::Import(i) => i.render(f, area),
             State::Execute(e) => e.render(f, area),
-            State::Settings(_) => todo!(),
+            State::Settings(s) => s.render(f, area),
         }
     }
 
@@ -132,7 +132,7 @@ impl Render for State {
             State::Search(s) => s.input(key),
             State::Import(i) => i.input(key),
             State::Execute(e) => e.input(key),
-            State::Settings(_) => todo!(),
+            State::Settings(s) => s.input(key),
         }
     }
 }

@@ -1,17 +1,22 @@
 //! # Import
 
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::{
+    fs::File,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use crate::{
     interface::{Render, TextArea},
+    metadata::{self, Metadata},
     update::control,
+    ROOT,
 };
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout},
     prelude::Rect,
     style::{Color, Style},
-    widgets::{block::Title, Block, BorderType, Borders, Paragraph},
+    widgets::{block::Title, Block, BorderType, Borders, List, ListItem, ListState, Paragraph},
     Frame,
 };
 
@@ -26,6 +31,69 @@ pub struct Import {
     title: TextArea,
     selector: TextArea,
     language: TextArea,
+    files: FileList,
+}
+
+#[derive(Clone, Debug)]
+struct FileList {
+    state: ListState,
+    items: Vec<String>,
+    meta: Vec<Metadata>,
+}
+
+use std::fs;
+
+impl FileList {
+    fn next(&mut self) {
+        let i = match self.state.selected() {
+            Some(i) => (i + 1) % self.items.len(),
+            None => 0,
+        };
+        self.state.select(Some(i));
+    }
+
+    fn previous(&mut self) {
+        let i = match self.state.selected() {
+            Some(i) => (self.items.len() + i - 1) % self.items.len(),
+            None => 0,
+        };
+        self.state.select(Some(i));
+    }
+
+    fn load(&mut self) {
+        let mut items: Vec<String> = Vec::new();
+        let mut meta = Vec::new();
+        let path = format!("{}/ingest/", ROOT.as_str());
+        if let Ok(itr) = fs::read_dir(path.clone()) {
+            for entry in itr.into_iter() {
+                if entry.is_err() {
+                    continue;
+                }
+                let entry = entry.unwrap();
+                let name = entry.file_name();
+                if let Ok(i) = name.into_string() {
+                    let m = Metadata::new(format!("{}{}", path, i));
+                    items.push(i);
+                    meta.push(m);
+                }
+            }
+        }
+        self.items = items;
+    }
+}
+
+impl Default for FileList {
+    fn default() -> Self {
+        let mut list = FileList {
+            state: ListState::default(),
+            items: Vec::new(),
+            meta: Vec::new(),
+        };
+
+        list.load();
+
+        list
+    }
 }
 
 impl Render for Import {
@@ -88,6 +156,12 @@ impl Render for Import {
             KeyCode::Char('s') if key.modifiers == KeyModifiers::CONTROL => {
                 // TODO: Submit job
             }
+            KeyCode::Char('j') if key.modifiers == KeyModifiers::CONTROL => {
+                self.files.next();
+            }
+            KeyCode::Char('k') if key.modifiers == KeyModifiers::CONTROL => {
+                self.files.previous();
+            }
             _ => {
                 match self.current {
                     0 => self.start.input(key),
@@ -125,14 +199,25 @@ impl Import {
     }
 
     fn render_tree(&mut self, f: &mut Frame, area: Rect) {
-        f.render_widget(
-            Paragraph::new("TODO: Tree Viewer").block(
+        let itms: Vec<ListItem> = self
+            .files
+            .items
+            .iter()
+            .map(|x| {
+                let t = format!("{}", x);
+                ListItem::new(t).style(Style::default().fg(Color::Gray))
+            })
+            .collect();
+
+        let list = List::new(itms)
+            .block(
                 Block::default()
                     .borders(Borders::ALL)
                     .border_type(BorderType::Rounded),
-            ),
-            area,
-        );
+            )
+            .highlight_style(Style::default().fg(Color::Cyan));
+
+        f.render_stateful_widget(list, area, &mut self.files.state);
     }
 
     fn render_input(&mut self, f: &mut Frame, area: Rect) {
@@ -154,9 +239,39 @@ impl Import {
         self.render_text(f, layout[1]);
     }
 
+    fn get_title(&self) -> String {
+        if let Some(i) = self.files.state.selected() {
+            if let Some(s) = self.files.items.get(i) {
+                s.to_string()
+            } else {
+                String::from("NO FILE SELECTED")
+            }
+        } else {
+            String::from("NO FILE SELECED")
+        }
+    }
+
+    fn get_meta(&self) -> Option<Metadata> {
+        if let Some(i) = self.files.state.selected() {
+            self.files.meta.get(i).cloned()
+        } else {
+            None
+        }
+    }
+
+    fn get_path(&self) -> Option<String> {
+        let path = format!("{}/ingest/{}", ROOT.as_str(), self.get_title());
+        if let Ok(_f) = File::open(path.clone()) {
+            Some(path)
+        } else {
+            None
+        }
+    }
+
     fn render_simples(&mut self, f: &mut Frame, area: Rect) {
         let layout = Layout::default()
             .constraints([
+                Constraint::Length(3),
                 Constraint::Length(3),
                 Constraint::Length(3),
                 Constraint::Length(3),
@@ -171,6 +286,11 @@ impl Import {
             .style(Style::default().fg(Color::Reset))
             .borders(Borders::ALL)
             .border_type(BorderType::Rounded);
+
+        // TODO: Get title
+        let title = Paragraph::new(format!(" {}", self.get_title()))
+            .block(block.clone().title(" File "))
+            .style(Style::default().fg(Color::Yellow));
 
         let identity = Paragraph::new(format!(" {}", 42))
             .block(block.clone().title(" Entity ID "))
@@ -190,12 +310,13 @@ impl Import {
         .block(block.clone().title(" Timestamp "))
         .style(Style::default().fg(Color::DarkGray));
 
-        f.render_widget(identity, layout[0]);
-        f.render_widget(name, layout[1]);
-        f.render_widget(ts, layout[2]);
-        f.render_widget(self.start.widget(), layout[3]);
-        f.render_widget(self.end.widget(), layout[4]);
-        f.render_widget(self.language.widget(), layout[5]);
+        f.render_widget(title, layout[0]);
+        f.render_widget(identity, layout[1]);
+        f.render_widget(name, layout[2]);
+        f.render_widget(ts, layout[3]);
+        f.render_widget(self.start.widget(), layout[4]);
+        f.render_widget(self.end.widget(), layout[5]);
+        f.render_widget(self.language.widget(), layout[6]);
     }
     fn render_text(&mut self, f: &mut Frame, area: Rect) {
         f.render_widget(self.title.widget(), area);
@@ -241,9 +362,18 @@ impl Import {
             .style(Style::default().fg(Color::Magenta))
             .title(Title::from(" Metadata ").alignment(Alignment::Center));
 
-        let para = Paragraph::new(" GET ffprobe ")
-            .block(block)
-            .style(Style::default());
+        // TODO: Error handling
+
+        let para = {
+            if let Some(m) = self.get_meta() {
+                Paragraph::new(m.to_string())
+                    .block(block)
+                    .style(Style::default())
+            } else {
+                // Paragraph::new("NO FILE SELECTED")
+                Paragraph::new(format!("{:?} \n {:?}", self.files.items, self.files.meta))
+            }
+        };
 
         f.render_widget(para, area);
     }
@@ -278,6 +408,7 @@ impl Default for Import {
             title,
             selector,
             language,
+            files: FileList::default(),
         }
     }
 }

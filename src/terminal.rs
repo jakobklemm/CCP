@@ -21,12 +21,9 @@ impl Terminal {
 
     pub fn enter(&mut self) -> Result<()> {
         util::terminal_startup()?;
-        // let hook = panic::take_hook;
-        panic::set_hook(Box::new(move |_panic| {
-            let _ = util::terminal_shutdown();
-            // questionable
-            // hook(panic);
-        }));
+        // panic::set_hook(Box::new(move |_panic| {
+        //     let _ = util::terminal_shutdown();
+        // }));
 
         self.terminal.hide_cursor()?;
         self.terminal.clear()?;

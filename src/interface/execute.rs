@@ -1,15 +1,17 @@
 //! # Execute
 
 use crate::{interface::Render, processor::Job};
-use ratatui::widgets::{List, ListItem, ListState};
+use ratatui::widgets::{List, ListItem, ListState, Paragraph};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct Execute {
     list: JobList,
 }
 
 impl Render for Execute {
-    fn render(&mut self, f: &mut ratatui::prelude::Frame, area: ratatui::prelude::Rect) {}
+    fn render(&mut self, f: &mut ratatui::prelude::Frame, area: ratatui::prelude::Rect) {
+        f.render_widget(Paragraph::new("execute"), area)
+    }
 
     fn input(&mut self, key: crossterm::event::KeyEvent) {}
 }
