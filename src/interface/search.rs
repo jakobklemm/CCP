@@ -105,7 +105,7 @@ impl Search {
             .iter()
             .map(|x| {
                 let t = format!("{} - {} - {}", x.id.0, x.title, x.text);
-                ListItem::new(t).style(Style::default().fg(Color::Green))
+                ListItem::new(t).style(Style::default())
             })
             .collect();
 

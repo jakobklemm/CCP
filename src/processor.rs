@@ -12,9 +12,11 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Job {
-    key: Uuid,
+    pub key: Uuid,
     start: Timestamp,
     end: Timestamp,
+    pub title: String,
+    tags: Vec<String>,
     input: String,
     output: Id,
     language: Language,
@@ -27,11 +29,18 @@ pub enum Language {
 }
 
 impl Language {
-    fn from_str(s: &str) -> Language {
+    pub fn from_str(s: &str) -> Language {
         match s {
             "en" => Self::EN,
             _ => Self::DE,
         }
+    }
+
+    pub fn from_input(lines: &[String]) -> Language {
+        for l in lines {
+            return Self::from_str(l);
+        }
+        Self::default()
     }
 }
 
@@ -72,14 +81,17 @@ impl Job {
         start: impl ToString,
         end: impl ToString,
         input: impl ToString,
-        output: Id,
+        title: impl ToString,
+        tags: Vec<String>,
     ) -> Option<Self> {
         Some(Self {
             key: Uuid::new_v4(),
             start: Timestamp::from_str(start)?,
             end: Timestamp::from_str(end)?,
             input: input.to_string(),
-            output,
+            title: title.to_string(),
+            tags,
+            output: Id::default(),
             language: Language::default(),
         })
     }
@@ -230,6 +242,13 @@ impl Div for Timestamp {
 impl Timestamp {
     fn to_seconds(&self) -> i32 {
         3600 * self.hours + 60 * self.minutes + self.seconds
+    }
+
+    pub fn from_input(lines: &[String]) -> String {
+        for l in lines {
+            return l.clone();
+        }
+        String::new()
     }
 
     pub fn from_str(line: impl ToString) -> Option<Self> {
