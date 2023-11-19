@@ -42,6 +42,9 @@ lazy_static! {
 fn main() -> Result<()> {
     util::ensure_configured()?;
 
+    // let meta = Metadata::new("ingest/test.mp4".to_string());
+    // println!("{:?}", meta);
+
     // let col = DATABASE.collection::<Entry>("entries");
     // let elms: Vec<Entry> = (1..100)
     //     .into_iter()

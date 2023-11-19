@@ -2,14 +2,16 @@
 
 use std::{
     fs::File,
-    time::{SystemTime, UNIX_EPOCH},
+    time::{Instant, SystemTime, UNIX_EPOCH},
 };
 
 use crate::{
+    entry::Id,
     interface::{Render, TextArea},
     metadata::{self, Metadata},
+    processor::{Job, Language, Timestamp},
     update::control,
-    ROOT,
+    util, DATABASE, ROOT,
 };
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::{
@@ -32,6 +34,10 @@ pub struct Import {
     selector: TextArea,
     language: TextArea,
     files: FileList,
+    popped: bool,
+    valid: bool,
+    id: String,
+    moment: Instant,
 }
 
 #[derive(Clone, Debug)]
@@ -61,8 +67,8 @@ impl FileList {
     }
 
     fn load(&mut self) {
-        let mut items: Vec<String> = Vec::new();
-        let mut meta = Vec::new();
+        self.items.clear();
+        self.meta.clear();
         let path = format!("{}/ingest/", ROOT.as_str());
         if let Ok(itr) = fs::read_dir(path.clone()) {
             for entry in itr.into_iter() {
@@ -73,12 +79,11 @@ impl FileList {
                 let name = entry.file_name();
                 if let Ok(i) = name.into_string() {
                     let m = Metadata::new(format!("{}{}", path, i));
-                    items.push(i);
-                    meta.push(m);
+                    self.items.push(i);
+                    self.meta.push(m);
                 }
             }
         }
-        self.items = items;
     }
 }
 
@@ -98,6 +103,29 @@ impl Default for FileList {
 
 impl Render for Import {
     fn render(&mut self, f: &mut Frame, area: Rect) {
+        if self.popped {
+            if self.moment.elapsed().as_secs_f64() > 1.25 {
+                self.popped = false;
+            } else {
+                let (text, style) = if self.valid {
+                    (
+                        format!("Job {} created!", self.id),
+                        Style::default().fg(Color::Green),
+                    )
+                } else {
+                    (format!("Invalid inputs!"), Style::default().fg(Color::Red))
+                };
+                let block = Block::default()
+                    .title(" Action ")
+                    .borders(Borders::ALL)
+                    .border_type(BorderType::Thick)
+                    .style(style.clone());
+                let center = util::center(10, 15, area);
+                f.render_widget(Paragraph::new(text).block(block).style(style), center);
+                return;
+            }
+        }
+
         let accept = Block::default()
             .borders(Borders::ALL)
             .border_type(BorderType::Rounded)
@@ -154,7 +182,7 @@ impl Render for Import {
                 self.focus_prev();
             }
             KeyCode::Char('s') if key.modifiers == KeyModifiers::CONTROL => {
-                // TODO: Submit job
+                self.save_job();
             }
             KeyCode::Char('j') if key.modifiers == KeyModifiers::CONTROL => {
                 self.files.next();
@@ -177,6 +205,59 @@ impl Render for Import {
 }
 
 impl Import {
+    fn save_job(&mut self) {
+        self.id = String::new();
+        self.popped = true;
+        self.moment = Instant::now();
+        let start = Timestamp::from_input(self.start.lines());
+        let end = Timestamp::from_input(self.end.lines());
+        let title = Timestamp::from_input(self.title.lines());
+        let lang = Language::from_input(self.language.lines());
+
+        // 0. Check if file selected
+        let file = {
+            if let Some(ind) = self.get_path() {
+                ind
+            } else {
+                self.valid = false;
+                return;
+            }
+        };
+        // 1. Create job
+        let mut job = {
+            // TODO: Add tags
+            if let Some(j) = Job::new(start, end, file, title, Vec::new()) {
+                self.valid = true;
+                j
+            } else {
+                self.valid = false;
+                return;
+            }
+        };
+        job.set_language(lang);
+        self.id = job.key.to_string();
+        // 2. Check validity
+        if !self.valid {
+            return;
+        }
+        // 3. Submit to DB
+        let col = DATABASE.collection::<Job>("jobs");
+        if let Err(_res) = col.insert_one(job) {
+            self.valid = false;
+            return;
+        }
+        // 4. Reset inputs
+        let def = Self::default();
+        self.language = def.language;
+        self.start = def.start;
+        self.end = def.end;
+        self.title = def.title;
+        self.selector = def.selector;
+        // 5. Popup
+        self.popped = true;
+        self.moment = Instant::now();
+    }
+
     fn reset_all(&mut self) {
         let block = Block::default()
             .style(Style::default().fg(Color::Gray))
@@ -370,8 +451,8 @@ impl Import {
                     .block(block)
                     .style(Style::default())
             } else {
-                // Paragraph::new("NO FILE SELECTED")
-                Paragraph::new(format!("{:?} \n {:?}", self.files.items, self.files.meta))
+                Paragraph::new("NO FILE SELECTED").block(block)
+                // Paragraph::new(format!("{:?}", self.files.meta))
             }
         };
 
@@ -402,6 +483,7 @@ impl Default for Import {
         selector.set_block(block.clone());
 
         Self {
+            id: String::new(),
             current: 0,
             start,
             end,
@@ -409,6 +491,9 @@ impl Default for Import {
             selector,
             language,
             files: FileList::default(),
+            popped: false,
+            valid: false,
+            moment: Instant::now(),
         }
     }
 }
