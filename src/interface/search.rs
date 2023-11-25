@@ -1,8 +1,10 @@
 //! # Search
 
+use crate::database::Database;
 use crate::entry::{Entry, Id};
 use crate::interface::{Render, TextArea};
 use crate::update::control;
+use crate::SEARCHER;
 use anyhow::Result;
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::layout::{Constraint, Direction, Layout};
@@ -74,6 +76,19 @@ impl Render for Search {
                     self.text = l.to_string();
                     break;
                 }
+                if self.text.len() >= 1 {
+                    match Database::search(&self.text) {
+                        Ok(elems) => {
+                            self.list.items = elems;
+                            self.list.state.select(None);
+                        }
+                        Err(_) => {
+                            // TODO: Maybe reset list to empty
+                            self.list.items = Vec::new();
+                            self.list.state.select(None);
+                        }
+                    }
+                }
             }
         }
     }
@@ -128,11 +143,10 @@ pub struct EntryList {
 }
 
 impl EntryList {
-    fn fetch(&mut self) -> Result<usize> {
-        let col = crate::DATABASE.collection::<Entry>("entries");
-        let entries: Vec<Entry> = col.find(None)?.filter_map(|x| x.ok()).collect();
-        self.items = entries;
-        Ok(self.items.len())
+    fn fetch(&mut self) -> Result<()> {
+        self.items = Database::search("*")?;
+        self.state.select(None);
+        Ok(())
     }
 
     fn next(&mut self) {

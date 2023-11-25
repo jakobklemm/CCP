@@ -3,6 +3,8 @@
 use anyhow::Result;
 use database::Database as DB;
 use metadata::Metadata;
+use tantivy::schema::Schema;
+use tantivy::{Index, IndexReader, IndexWriter, ReloadPolicy, Searcher};
 
 mod application;
 mod config;
@@ -31,6 +33,7 @@ use ratatui::{
     widgets::Paragraph,
 };
 use std::io::stderr;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 lazy_static! {
@@ -39,6 +42,31 @@ lazy_static! {
         Database::open_file(format!("{}/ccp-polo.db", root)).expect("Unable to open database")
     };
     pub static ref ROOT: String = std::env::var("CCP_ROOT").unwrap_or("/database".to_string());
+    pub static ref SCHEMA: Schema = DB::schema();
+    pub static ref INDEX: Index = {
+        let path = format!("{}/db/", ROOT.as_str());
+        let _ = std::fs::create_dir_all(path.clone());
+
+        let index = match Index::create_in_dir(path.clone(), SCHEMA.to_owned()) {
+            Ok(i) => i,
+            Err(_) => Index::open_in_dir(path).expect("Unable to open Tantivy Database"),
+        };
+
+        index
+    };
+    pub static ref WRITER: Arc<Mutex<IndexWriter>> = {
+        let w = INDEX
+            .writer(25_000_000)
+            .expect("Unable to create Tantivy writer");
+        Arc::new(Mutex::new(w))
+    };
+    pub static ref SEARCHER: IndexReader = {
+        INDEX
+            .reader_builder()
+            .reload_policy(ReloadPolicy::OnCommit)
+            .try_into()
+            .expect("Unable to create Tantivy reader")
+    };
 }
 
 fn main() -> Result<()> {
@@ -56,12 +84,11 @@ fn main() -> Result<()> {
     // let _ = col.insert_many(elms);
     //
 
+    // let mut db = DB::new()?;
     let mut app = App::default();
-
-    let mut db = DB::new()?;
-    // db.random()?;
-
-    let _ = db.search("1 OR 2")?;
+    // let _ = DB::random();
+    let s = DB::search("SteW");
+    println!("{:?}", s);
 
     // let term = Terminal::new(CrosstermBackend::new(stderr()))?;
     // let events = handler::EventHandler::new(100);
