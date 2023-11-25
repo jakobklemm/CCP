@@ -1,5 +1,6 @@
 //! Application
 
+use crate::database::Database;
 use crate::entry::Entry;
 use crate::interface::Render;
 use crate::interface::{Interface, State};

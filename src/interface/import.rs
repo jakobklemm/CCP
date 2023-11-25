@@ -211,6 +211,7 @@ impl Import {
         self.moment = Instant::now();
         let start = Timestamp::from_input(self.start.lines());
         let end = Timestamp::from_input(self.end.lines());
+        // TODO: Parse Title properly
         let title = Timestamp::from_input(self.title.lines());
         let lang = Language::from_input(self.language.lines());
 
