@@ -11,7 +11,7 @@ use rand::{
 };
 use tantivy::{
     collector::TopDocs,
-    query::{BooleanQuery, FuzzyTermQuery, QueryClone, QueryParser},
+    query::{BooleanQuery, FuzzyTermQuery, QueryClone, QueryParser, RegexQuery},
     query_grammar::Occur,
     schema::{Field, NumericOptions, Schema, TextOptions, INDEXED, STORED, TEXT},
     DateOptions, DateTimePrecision, Document, Index, IndexBuilder, IndexReader, IndexWriter,
@@ -114,26 +114,13 @@ impl Database {
 
         let searcher = SEARCHER.searcher();
 
-        let parser = QueryParser::for_index(&INDEX, vec![title, text, tags]);
-        let query_all = parser.parse_query(query)?;
+        let mut parser = QueryParser::for_index(&INDEX, vec![title, text, tags]);
+        parser.set_conjunction_by_default();
+        parser.set_field_fuzzy(title, false, 2, false);
+        parser.set_field_fuzzy(text, false, 2, false);
+        let query = parser.parse_query(query)?;
 
-        let title_term = Term::from_field_text(title, query);
-        let title_query = FuzzyTermQuery::new(title_term, 2, true);
-
-        let text_term = Term::from_field_text(text, query);
-        let text_query = FuzzyTermQuery::new(text_term, 2, true);
-
-        let tags_term = Term::from_field_text(tags, query);
-        let tags_query = FuzzyTermQuery::new(tags_term, 2, true);
-
-        let comps = vec![
-            (Occur::Should, title_query.box_clone()),
-            (Occur::Should, text_query.box_clone()),
-            (Occur::Should, tags_query.box_clone()),
-        ];
-        let query = BooleanQuery::new(comps);
-
-        let docs = searcher.search(&query_all, &TopDocs::with_limit(100))?;
+        let docs = searcher.search(&query, &TopDocs::with_limit(55))?;
 
         let mut entries = Vec::with_capacity(docs.len());
 

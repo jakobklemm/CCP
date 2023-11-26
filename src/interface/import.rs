@@ -10,9 +10,11 @@ use crate::{
     interface::{Render, TextArea},
     metadata::{self, Metadata},
     processor::{Job, Language, Timestamp},
+    root::Root,
     update::control,
     util, DATABASE, ROOT,
 };
+use chrono::{DateTime, Local, SecondsFormat};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout},
@@ -38,6 +40,7 @@ pub struct Import {
     valid: bool,
     id: String,
     moment: Instant,
+    root: Root,
 }
 
 #[derive(Clone, Debug)]
@@ -79,6 +82,10 @@ impl FileList {
                 let name = entry.file_name();
                 if let Ok(i) = name.into_string() {
                     let m = Metadata::new(format!("{}{}", path, i));
+                    if m.is_err() {
+                        continue;
+                    }
+                    let m = m.unwrap();
                     self.items.push(i);
                     self.meta.push(m);
                 }
@@ -359,7 +366,6 @@ impl Import {
                 Constraint::Length(3),
                 Constraint::Length(3),
                 Constraint::Length(3),
-                Constraint::Length(3),
                 Constraint::Min(0),
             ])
             .split(area);
@@ -374,31 +380,23 @@ impl Import {
             .block(block.clone().title(" File "))
             .style(Style::default().fg(Color::Yellow));
 
-        let identity = Paragraph::new(format!(" {}", 42))
-            .block(block.clone().title(" Entity ID "))
-            .style(Style::default().fg(Color::DarkGray));
-
         let name = Paragraph::new(format!(" test.mp4"))
             .block(block.clone().title(" File Name "))
             .style(Style::default().fg(Color::DarkGray));
 
         let ts = Paragraph::new(format!(
-            " {:?}",
-            SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_secs()
+            " {}",
+            Local::now().to_rfc3339_opts(SecondsFormat::Secs, false)
         ))
         .block(block.clone().title(" Timestamp "))
         .style(Style::default().fg(Color::DarkGray));
 
         f.render_widget(title, layout[0]);
-        f.render_widget(identity, layout[1]);
-        f.render_widget(name, layout[2]);
-        f.render_widget(ts, layout[3]);
-        f.render_widget(self.start.widget(), layout[4]);
-        f.render_widget(self.end.widget(), layout[5]);
-        f.render_widget(self.language.widget(), layout[6]);
+        f.render_widget(name, layout[1]);
+        f.render_widget(ts, layout[2]);
+        f.render_widget(self.start.widget(), layout[3]);
+        f.render_widget(self.end.widget(), layout[4]);
+        f.render_widget(self.language.widget(), layout[5]);
     }
     fn render_text(&mut self, f: &mut Frame, area: Rect) {
         f.render_widget(self.title.widget(), area);
@@ -483,6 +481,9 @@ impl Default for Import {
         selector.set_placeholder_text(" Enter tags");
         selector.set_block(block.clone());
 
+        // TODO: Handle non existing file
+        let root = Root::default();
+
         Self {
             id: String::new(),
             current: 0,
@@ -495,6 +496,7 @@ impl Default for Import {
             popped: false,
             valid: false,
             moment: Instant::now(),
+            root,
         }
     }
 }

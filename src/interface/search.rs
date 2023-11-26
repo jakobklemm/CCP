@@ -6,6 +6,7 @@ use crate::interface::{Render, TextArea};
 use crate::update::control;
 use crate::SEARCHER;
 use anyhow::Result;
+use chrono::SecondsFormat;
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::layout::{Constraint, Direction, Layout};
 use ratatui::style::{Color, Style};
@@ -119,7 +120,13 @@ impl Search {
             .items
             .iter()
             .map(|x| {
-                let t = format!("{} - {} - {}", x.id.0, x.title, x.text);
+                let t = format!(
+                    "{} - {} - {} - {}",
+                    x.id.0,
+                    x.timestamp.naive_local().to_string(),
+                    x.title,
+                    x.text
+                );
                 ListItem::new(t).style(Style::default())
             })
             .collect();
