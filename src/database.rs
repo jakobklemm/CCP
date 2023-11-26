@@ -4,13 +4,18 @@
 use std::fmt::Debug;
 
 use anyhow::Result;
-use rand::distributions::{Alphanumeric, DistString};
+use lipsum::{lipsum_title, lipsum_words_with_rng};
+use rand::{
+    distributions::{Alphanumeric, DistString},
+    thread_rng,
+};
 use tantivy::{
     collector::TopDocs,
-    query::QueryParser,
-    schema::{Field, NumericOptions, Schema, STORED, TEXT},
+    query::{BooleanQuery, FuzzyTermQuery, QueryClone, QueryParser},
+    query_grammar::Occur,
+    schema::{Field, NumericOptions, Schema, TextOptions, INDEXED, STORED, TEXT},
     DateOptions, DateTimePrecision, Document, Index, IndexBuilder, IndexReader, IndexWriter,
-    ReloadPolicy, Searcher,
+    ReloadPolicy, Searcher, Term,
 };
 
 use crate::{
@@ -84,11 +89,8 @@ impl Database {
         let mut write = WRITER.lock().unwrap();
         for x in 25..110 {
             let mut e = Entry::default();
-            e.text = format!(
-                "Tantivy test: {}",
-                Alphanumeric.sample_string(&mut rand::thread_rng(), 24)
-            );
-            e.title = format!("docs: {:#04x}", x);
+            e.text = format!("Tantivy test: {}", lipsum_words_with_rng(thread_rng(), x));
+            e.title = format!("documents {}", lipsum_words_with_rng(thread_rng(), 8));
             let d = e.to_document()?;
             let _ = write.add_document(d);
         }
@@ -104,20 +106,41 @@ impl Database {
 
         let title = schema.get_field("title")?;
         let text = schema.get_field("text")?;
-        let tag = schema.get_field("tags")?;
+        let tags = schema.get_field("tags")?;
         let _ts = schema.get_field("timestamp")?;
         let _id = schema.get_field("id")?;
 
+        // println!("Searching!");
+
         let searcher = SEARCHER.searcher();
-        let parser = QueryParser::for_index(&INDEX, vec![title, text, tag]);
-        let query = parser.parse_query(query)?;
-        let docs = searcher.search(&query, &TopDocs::with_limit(10))?;
+
+        let parser = QueryParser::for_index(&INDEX, vec![title, text, tags]);
+        let query_all = parser.parse_query(query)?;
+
+        let title_term = Term::from_field_text(title, query);
+        let title_query = FuzzyTermQuery::new(title_term, 2, true);
+
+        let text_term = Term::from_field_text(text, query);
+        let text_query = FuzzyTermQuery::new(text_term, 2, true);
+
+        let tags_term = Term::from_field_text(tags, query);
+        let tags_query = FuzzyTermQuery::new(tags_term, 2, true);
+
+        let comps = vec![
+            (Occur::Should, title_query.box_clone()),
+            (Occur::Should, text_query.box_clone()),
+            (Occur::Should, tags_query.box_clone()),
+        ];
+        let query = BooleanQuery::new(comps);
+
+        let docs = searcher.search(&query_all, &TopDocs::with_limit(100))?;
 
         let mut entries = Vec::with_capacity(docs.len());
 
         for (_s, a) in docs {
             let doc = searcher.doc(a)?;
             let js = schema.to_json(&doc);
+            // println!("{} - {:?}", s, js);
             let m = serde_json::from_str::<Multiplied>(&js)?;
             let e: Entry = m.try_into()?;
             entries.push(e);

@@ -87,31 +87,35 @@ fn main() -> Result<()> {
     // let mut db = DB::new()?;
     let mut app = App::default();
     // let _ = DB::random();
-    let s = DB::search("SteW");
-    println!("{:?}", s);
+    let s = DB::search("materia")?;
+    for e in &s {
+        println!("{:?}", e);
+    }
 
-    // let term = Terminal::new(CrosstermBackend::new(stderr()))?;
-    // let events = handler::EventHandler::new(100);
-    // let mut tui = terminal::Terminal::new(term, events);
-    // tui.enter()?;
+    println!("Count: {}", s.len());
     //
-    // while !app.should_quit() {
-    //     tui.draw(&mut app)?;
-    //     match tui.events.next()? {
-    //         Event::Tick => {
-    //             app.tick();
-    //         }
-    //         Event::Key(event) => update::update(&mut app, event),
-    //         Event::Mouse(_m) => {}
-    //         Event::Resize(_, _) => {}
-    //     }
-    // }
-    //
-    // tui.exit()?;
+    let term = Terminal::new(CrosstermBackend::new(stderr()))?;
+    let events = handler::EventHandler::new(100);
+    let mut tui = terminal::Terminal::new(term, events);
+    tui.enter()?;
 
-    // let job = Job::new("00:00:20", "00:01:35", "test.mp4", Id(45)).unwrap();
+    while !app.should_quit() {
+        tui.draw(&mut app)?;
+        match tui.events.next()? {
+            Event::Tick => {
+                app.tick();
+            }
+            Event::Key(event) => update::update(&mut app, event),
+            Event::Mouse(_m) => {}
+            Event::Resize(_, _) => {}
+        }
+    }
+
+    tui.exit()?;
+
+    // let job = Job::new("00:00:20", "00:01:35", "test.mp4", "test", Vec::new()).unwrap();
     // let s = job.execute();
-
+    //
     // while true {
     //     match s.recv().unwrap() {
     //         Status::Media(p) => println!("FFMPGE: {}", p),
@@ -122,6 +126,6 @@ fn main() -> Result<()> {
     //         }
     //     }
     // }
-
+    //
     Ok(())
 }
