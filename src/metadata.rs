@@ -11,9 +11,9 @@ pub struct Metadata {
 }
 
 impl Metadata {
-    pub fn new(path: String) -> Metadata {
+    pub fn new(path: String) -> Result<Self> {
         let s = Self::generate(path);
-        serde_json::from_str(&s).expect("Unable to parse metadata.")
+        Ok(serde_json::from_str(&s)?)
     }
 
     fn generate(path: String) -> String {

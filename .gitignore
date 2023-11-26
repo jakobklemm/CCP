@@ -5,3 +5,4 @@ Cargo.lock
 temp/
 *.wal
 db/
+*.json
