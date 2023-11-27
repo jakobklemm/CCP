@@ -43,7 +43,10 @@ impl Database {
             .set_stored()
             .set_fast();
 
-        builder.add_i64_field("id", nums);
+        builder.add_i64_field("id", nums.clone());
+
+        builder.add_f64_field("size", nums.clone());
+        builder.add_f64_field("duration", nums);
 
         let dates = DateOptions::default()
             .set_stored()
@@ -52,15 +55,6 @@ impl Database {
         builder.add_date_field("timestamp", dates);
 
         builder.build()
-    }
-
-    pub fn get_fields() -> Result<(Field, Field, Field)> {
-        let schema = Self::schema();
-        let title = schema.get_field("title")?;
-        let text = schema.get_field("text")?;
-        let tags = schema.get_field("tags")?;
-
-        Ok((title, text, tags))
     }
 
     pub fn new() -> Result<Self> {
@@ -89,10 +83,10 @@ impl Database {
         let mut write = WRITER.lock().unwrap();
         for x in 25..110 {
             let mut e = Entry::default();
-            e.text = format!("Tantivy test: {}", lipsum_words_with_rng(thread_rng(), x));
-            e.title = format!("documents {}", lipsum_words_with_rng(thread_rng(), 8));
-            let d = e.to_document()?;
-            let _ = write.add_document(d);
+            e.text = format!("{}", lipsum_words_with_rng(thread_rng(), x));
+            e.title = format!("{}", lipsum_words_with_rng(thread_rng(), 8));
+            let d = e.to_document().unwrap();
+            let e = write.add_document(d).unwrap();
         }
 
         // WRITER.commit()?;
@@ -127,7 +121,6 @@ impl Database {
         for (_s, a) in docs {
             let doc = searcher.doc(a)?;
             let js = schema.to_json(&doc);
-            // println!("{} - {:?}", s, js);
             let m = serde_json::from_str::<Multiplied>(&js)?;
             let e: Entry = m.try_into()?;
             entries.push(e);

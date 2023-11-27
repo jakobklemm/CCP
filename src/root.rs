@@ -18,7 +18,15 @@ static ERR: &'static str = "Unable to create default configuration.";
 pub struct Root {
     counter: i64,
     /// (count, tag)
-    tags: Vec<(usize, String)>,
+    tags: Vec<Tag>,
+    size: f64,
+    entries: usize,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct Tag {
+    count: usize,
+    tag: String,
 }
 
 impl Root {
@@ -51,8 +59,8 @@ impl Root {
 
     pub fn get_tags(&self) -> Vec<String> {
         let mut ntags = self.tags.clone();
-        ntags.sort_by(|(xa, _xb), (ya, _yb)| xa.partial_cmp(ya).unwrap());
-        ntags.into_iter().map(|(_x, y)| y).collect()
+        ntags.sort_by(|x, y| x.count.partial_cmp(&y.count).unwrap());
+        ntags.into_iter().map(|y| y.tag).collect()
     }
 }
 
@@ -65,9 +73,15 @@ impl Default for Root {
             if Self::exists() {
                 panic!("Root database exists but isn't valid!");
             }
+            // TODO: default
             let r = Self {
                 counter: 0,
-                tags: Vec::default(),
+                tags: vec![Tag {
+                    count: 2,
+                    tag: String::from("test"),
+                }],
+                size: 0.0,
+                entries: 0,
             };
             let s = serde_json::to_string_pretty(&r).expect(ERR);
 

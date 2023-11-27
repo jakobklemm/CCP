@@ -3,6 +3,7 @@
 use anyhow::Result;
 use database::Database as DB;
 use metadata::Metadata;
+use root::Root;
 use tantivy::schema::Schema;
 use tantivy::{Index, IndexReader, IndexWriter, ReloadPolicy, Searcher};
 
@@ -68,6 +69,7 @@ lazy_static! {
             .try_into()
             .expect("Unable to create Tantivy reader")
     };
+    pub static ref CCP: Root = Root::default();
 }
 
 fn main() -> Result<()> {
@@ -87,14 +89,10 @@ fn main() -> Result<()> {
 
     // let mut db = DB::new()?;
     let mut app = App::default();
-    // let _ = DB::random();
-    let s = DB::search("materia")?;
-    for e in &s {
-        println!("{:?}", e);
-    }
-
-    println!("Count: {}", s.len());
+    // let r = DB::random();
+    // print!("{:?}", r);
     //
+
     let term = Terminal::new(CrosstermBackend::new(stderr()))?;
     let events = handler::EventHandler::new(100);
     let mut tui = terminal::Terminal::new(term, events);

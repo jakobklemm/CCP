@@ -2,19 +2,24 @@
 
 use crate::{config::Config, database::Database, SCHEMA};
 use anyhow::Result;
-use chrono::{DateTime as CDT, Local};
+use chrono::{DateTime as CDT, Local, NaiveDate, NaiveDateTime, NaiveTime};
 use polodb_core::bson::doc;
 use serde::{Deserialize, Serialize};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::{
+    str::FromStr,
+    time::{SystemTime, UNIX_EPOCH},
+};
 use tantivy::{schema::Schema, DateTime, Document};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Entry {
     pub id: Id,
     pub title: String,
-    pub timestamp: CDT<Local>,
+    pub timestamp: NaiveDate,
     pub tags: Vec<String>,
     pub text: String,
+    pub size: f64,
+    pub duration: f64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -24,6 +29,8 @@ pub struct Multiplied {
     timestamp: Vec<String>,
     text: Vec<String>,
     tags: Option<Vec<String>>,
+    size: Vec<f64>,
+    duration: Vec<f64>,
 }
 
 use anyhow::Error;
@@ -32,11 +39,14 @@ impl TryInto<Entry> for Multiplied {
     type Error = Error;
 
     fn try_into(self) -> std::prelude::v1::Result<Entry, Self::Error> {
-        // TODO: Memory & CPU efficiency
+        // TODO: efficiency
         let mut id = 0;
         let mut title = String::default();
-        let mut timestamp = Local::now();
+        let mut timestamp = Local::now().date_naive();
         let mut text = String::default();
+
+        let mut size = 0.0;
+        let mut dur = 0.0;
 
         for i in self.id {
             id = i;
@@ -49,12 +59,22 @@ impl TryInto<Entry> for Multiplied {
         }
 
         for t in self.timestamp {
-            timestamp = t.parse::<CDT<Local>>()?;
+            timestamp = NaiveDateTime::parse_from_str(&t, "%Y-%m-%dT%H:%M:%SZ")?.date();
             break;
         }
 
         for t in self.text {
             text = t;
+            break;
+        }
+
+        for d in self.duration {
+            dur = d;
+            break;
+        }
+
+        for s in self.size {
+            size = s;
             break;
         }
 
@@ -64,6 +84,8 @@ impl TryInto<Entry> for Multiplied {
             timestamp,
             text,
             tags: self.tags.unwrap_or(Vec::default()),
+            size,
+            duration: dur,
         })
     }
 }
@@ -85,14 +107,18 @@ impl Entry {
         let text = schema.get_field("text")?;
         let tags = schema.get_field("tags")?;
         let timestamp = schema.get_field("timestamp")?;
+        let size = schema.get_field("size")?;
+        let dur = schema.get_field("duration")?;
+
+        let ts = self.timestamp.and_hms_opt(0, 0, 0).unwrap();
 
         doc.add_text(title, self.title);
         doc.add_text(text, self.text);
         doc.add_i64(id, self.id.0);
-        doc.add_date(
-            timestamp,
-            DateTime::from_timestamp_secs(self.timestamp.timestamp()),
-        );
+        doc.add_date(timestamp, DateTime::from_timestamp_secs(ts.timestamp()));
+
+        doc.add_f64(size, self.size);
+        doc.add_f64(dur, self.duration);
 
         for tag in self.tags {
             doc.add_text(tags, tag);
@@ -119,9 +145,11 @@ impl Default for Entry {
         Self {
             id: Id::default(),
             title: String::from("TITLE MISSING"),
-            timestamp: Local::now(),
+            timestamp: Local::now().date_naive(),
             tags: Vec::new(),
             text: String::new(),
+            size: 0.0,
+            duration: 0.0,
         }
     }
 }
