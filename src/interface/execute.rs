@@ -53,7 +53,7 @@ impl Execute {
             .items
             .iter()
             .map(|x| {
-                let t = format!("{} - {}", x.key, x.title);
+                let t = format!("{}", x.title);
                 ListItem::new(t)
             })
             .collect();
@@ -77,11 +77,5 @@ struct JobList {
 }
 
 impl JobList {
-    fn fetch(&mut self) {
-        let col = crate::DATABASE.collection::<Job>("jobs");
-        if let Ok(jobs) = col.find(None) {
-            let fil = jobs.filter_map(|x| x.ok()).collect();
-            self.items = fil;
-        }
-    }
+    fn fetch(&mut self) {}
 }

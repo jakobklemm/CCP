@@ -1,21 +1,22 @@
 //! Processor
 
 use crate::entry::Id;
+use chrono::{Local, NaiveDate};
 use std::io::{BufRead, BufReader};
 use std::process::{Command, Stdio};
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::thread;
-use uuid::Uuid;
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Job {
-    pub key: Uuid,
     start: Timestamp,
     end: Timestamp,
     pub title: String,
+    pub desc: String,
+    timestamp: NaiveDate,
     tags: Vec<String>,
     input: String,
     output: Id,
@@ -30,6 +31,7 @@ pub enum Language {
 
 impl Language {
     pub fn from_str(s: &str) -> Language {
+        let s = s.trim();
         match s {
             "en" => Self::EN,
             _ => Self::DE,
@@ -82,14 +84,18 @@ impl Job {
         end: impl ToString,
         input: impl ToString,
         title: impl ToString,
+        desc: impl ToString,
+        timestamp: impl ToString,
         tags: Vec<String>,
     ) -> Option<Self> {
         Some(Self {
-            key: Uuid::new_v4(),
             start: Timestamp::from_str(start)?,
             end: Timestamp::from_str(end)?,
             input: input.to_string(),
             title: title.to_string(),
+            desc: desc.to_string(),
+            timestamp: NaiveDate::parse_from_str(&timestamp.to_string(), "%d-%m-%Y")
+                .unwrap_or(Local::now().date_naive()),
             tags,
             output: Id::default(),
             language: Language::default(),

@@ -12,19 +12,20 @@ use crate::{
     processor::{Job, Language, Timestamp},
     root::Root,
     update::control,
-    util, DATABASE, ROOT,
+    util, CCP, DATABASE, ROOT,
 };
 use chrono::{DateTime, Local, SecondsFormat};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout},
     prelude::Rect,
-    style::{Color, Style},
+    style::{Color, Modifier, Style},
     widgets::{block::Title, Block, BorderType, Borders, List, ListItem, ListState, Paragraph},
     Frame,
 };
+use tokio::select;
 
-const INPUTS: usize = 5;
+const INPUTS: usize = 7;
 
 /// TODO: Add Tags list and file tree.
 #[derive(Debug, Clone)]
@@ -33,6 +34,7 @@ pub struct Import {
     start: TextArea,
     end: TextArea,
     title: TextArea,
+    desc: TextArea,
     selector: TextArea,
     language: TextArea,
     files: FileList,
@@ -40,7 +42,8 @@ pub struct Import {
     valid: bool,
     id: String,
     moment: Instant,
-    root: Root,
+    timestamp: TextArea,
+    tags: TagsList,
 }
 
 #[derive(Clone, Debug)]
@@ -108,6 +111,39 @@ impl Default for FileList {
     }
 }
 
+#[derive(Clone, Debug)]
+struct TagsList {
+    state: ListState,
+    items: Vec<String>,
+}
+
+impl TagsList {
+    fn next(&mut self) {
+        let i = match self.state.selected() {
+            Some(i) => (i + 1) % self.items.len(),
+            None => 0,
+        };
+        self.state.select(Some(i));
+    }
+
+    fn previous(&mut self) {
+        let i = match self.state.selected() {
+            Some(i) => (self.items.len() + i - 1) % self.items.len(),
+            None => 0,
+        };
+        self.state.select(Some(i));
+    }
+}
+
+impl Default for TagsList {
+    fn default() -> Self {
+        Self {
+            state: ListState::default(),
+            items: CCP.get_tags(),
+        }
+    }
+}
+
 impl Render for Import {
     fn render(&mut self, f: &mut Frame, area: Rect) {
         if self.popped {
@@ -141,21 +177,29 @@ impl Render for Import {
         match self.current {
             0 => {
                 self.reset_all();
-                self.start.set_block(accept.title(" Start Time "));
+                self.timestamp.set_block(accept.title(" Timestamp "));
             }
             1 => {
                 self.reset_all();
-                self.end.set_block(accept.title(" End Time "));
+                self.start.set_block(accept.title(" Start Time "));
             }
             2 => {
                 self.reset_all();
-                self.language.set_block(accept.title(" Language "));
+                self.end.set_block(accept.title(" End Time "));
             }
             3 => {
                 self.reset_all();
                 self.title.set_block(accept.title(" Enter Title "));
             }
             4 => {
+                self.reset_all();
+                self.language.set_block(accept.title(" Language "));
+            }
+            5 => {
+                self.reset_all();
+                self.desc.set_block(accept.title(" Description "));
+            }
+            6 => {
                 self.reset_all();
                 self.selector.set_block(accept.title(" Enter Tags "));
             }
@@ -179,8 +223,11 @@ impl Render for Import {
     /// TODO: Handle inner swap to lower block
     fn input(&mut self, key: KeyEvent) {
         match key.code {
-            KeyCode::Enter => {
+            KeyCode::Tab => {
                 self.focus_next();
+            }
+            KeyCode::BackTab => {
+                self.focus_prev();
             }
             KeyCode::Down if control(&key) => {
                 self.focus_next();
@@ -188,22 +235,38 @@ impl Render for Import {
             KeyCode::Up if control(&key) => {
                 self.focus_prev();
             }
+            KeyCode::Char('n') if key.modifiers == KeyModifiers::CONTROL => {
+                self.files.next();
+            }
+            KeyCode::Char('p') if key.modifiers == KeyModifiers::CONTROL => {
+                self.files.previous();
+            }
             KeyCode::Char('s') if key.modifiers == KeyModifiers::CONTROL => {
                 self.save_job();
             }
             KeyCode::Char('j') if key.modifiers == KeyModifiers::CONTROL => {
-                self.files.next();
+                self.tags.next();
             }
             KeyCode::Char('k') if key.modifiers == KeyModifiers::CONTROL => {
-                self.files.previous();
+                self.tags.previous();
+            }
+            KeyCode::Enter => {
+                // Submit selected tag
+                if let Some(i) = self.tags.state.selected() {
+                    let s = self.tags.items.get(i).expect("Invalid tag list state!");
+                    let _ = self.selector.insert_str(s);
+                    self.current = 6;
+                }
             }
             _ => {
                 match self.current {
-                    0 => self.start.input(key),
-                    1 => self.end.input(key),
-                    2 => self.language.input(key),
+                    0 => self.timestamp.input(key),
+                    1 => self.start.input(key),
+                    2 => self.end.input(key),
                     3 => self.title.input(key),
-                    4 => self.selector.input(key),
+                    4 => self.language.input(key),
+                    5 => self.desc.input(key),
+                    6 => self.selector.input(key),
                     _ => false,
                 };
             }
@@ -218,8 +281,31 @@ impl Import {
         self.moment = Instant::now();
         let start = Timestamp::from_input(self.start.lines());
         let end = Timestamp::from_input(self.end.lines());
+        let timestamp = {
+            let first = self.timestamp.lines().get(0);
+            if first.is_none() {
+                self.valid = false;
+                return;
+            }
+            first.unwrap()
+        };
         // TODO: Parse Title properly
-        let title = Timestamp::from_input(self.title.lines());
+        let title = {
+            let first = self.title.lines().get(0);
+            if first.is_none() {
+                self.valid = false;
+                return;
+            }
+            first.unwrap()
+        };
+        let desc = {
+            let first = self.desc.lines().get(0);
+            if first.is_none() {
+                self.valid = false;
+                return;
+            }
+            first.unwrap()
+        };
         let lang = Language::from_input(self.language.lines());
 
         // 0. Check if file selected
@@ -234,7 +320,7 @@ impl Import {
         // 1. Create job
         let mut job = {
             // TODO: Add tags
-            if let Some(j) = Job::new(start, end, file, title, Vec::new()) {
+            if let Some(j) = Job::new(start, end, file, title, desc, timestamp, Vec::new()) {
                 self.valid = true;
                 j
             } else {
@@ -243,7 +329,6 @@ impl Import {
             }
         };
         job.set_language(lang);
-        self.id = job.key.to_string();
         // 2. Check validity
         if !self.valid {
             return;
@@ -272,9 +357,11 @@ impl Import {
             .borders(Borders::ALL)
             .border_type(BorderType::Rounded);
 
+        self.timestamp.set_block(block.clone().title(" Timestamp "));
         self.start.set_block(block.clone().title(" Start Time "));
         self.end.set_block(block.clone().title(" End Time "));
         self.title.set_block(block.clone().title(" Enter Title "));
+        self.desc.set_block(block.clone().title(" Description "));
         self.language.set_block(block.clone().title(" Language "));
         self.selector.set_block(block.clone().title(" Enter Tags "));
     }
@@ -380,26 +467,15 @@ impl Import {
             .block(block.clone().title(" File "))
             .style(Style::default().fg(Color::Yellow));
 
-        let name = Paragraph::new(format!(" test.mp4"))
-            .block(block.clone().title(" File Name "))
-            .style(Style::default().fg(Color::DarkGray));
-
-        let ts = Paragraph::new(format!(
-            " {}",
-            Local::now().to_rfc3339_opts(SecondsFormat::Secs, false)
-        ))
-        .block(block.clone().title(" Timestamp "))
-        .style(Style::default().fg(Color::DarkGray));
-
         f.render_widget(title, layout[0]);
-        f.render_widget(name, layout[1]);
-        f.render_widget(ts, layout[2]);
-        f.render_widget(self.start.widget(), layout[3]);
-        f.render_widget(self.end.widget(), layout[4]);
+        f.render_widget(self.timestamp.widget(), layout[1]);
+        f.render_widget(self.start.widget(), layout[2]);
+        f.render_widget(self.end.widget(), layout[3]);
+        f.render_widget(self.title.widget(), layout[4]);
         f.render_widget(self.language.widget(), layout[5]);
     }
     fn render_text(&mut self, f: &mut Frame, area: Rect) {
-        f.render_widget(self.title.widget(), area);
+        f.render_widget(self.desc.widget(), area);
     }
 
     fn render_lower(&mut self, f: &mut Frame, area: Rect) {
@@ -412,10 +488,22 @@ impl Import {
     }
 
     fn render_list(&mut self, f: &mut Frame, area: Rect) {
-        f.render_widget(
-            Paragraph::new("TODO: Tags list").block(Block::default().borders(Borders::ALL)),
-            area,
-        );
+        let itms: Vec<ListItem> = self
+            .tags
+            .items
+            .iter()
+            .map(|x| ListItem::new(format!("{}", x)).style(Style::default()))
+            .collect();
+
+        let list = List::new(itms)
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_type(BorderType::Rounded),
+            )
+            .highlight_style(Style::default().fg(Color::Cyan));
+
+        f.render_stateful_widget(list, area, &mut self.tags.state);
     }
 
     fn render_bar(&mut self, f: &mut Frame, area: Rect) {
@@ -465,24 +553,36 @@ impl Default for Import {
             .borders(Borders::ALL)
             .border_type(BorderType::Rounded);
 
+        let style = Style::default();
+
+        let mut timestamp = TextArea::default();
+        timestamp.set_placeholder_text("%d-%m-%Y");
+        timestamp.set_block(block.clone());
+        timestamp.set_cursor_line_style(style.clone());
         let mut start = TextArea::default();
         start.set_placeholder_text(" Start HH:MM:SS");
         start.set_block(block.clone().title(" Start Time "));
+        start.set_cursor_line_style(style.clone());
         let mut end = TextArea::default();
         end.set_placeholder_text(" End HH:MM:SS");
         end.set_block(block.clone().title(" End Time "));
+        end.set_cursor_line_style(style.clone());
         let mut title = TextArea::default();
         title.set_placeholder_text(" Enter Title");
         title.set_block(block.clone().title(" Enter Title "));
+        title.set_cursor_line_style(style.clone());
+        let mut desc = TextArea::default();
+        desc.set_placeholder_text(" Enter Description");
+        desc.set_block(block.clone().title(" Description "));
+        desc.set_cursor_line_style(style.clone());
         let mut language = TextArea::default();
         language.set_placeholder_text(" de, en");
         language.set_block(block.clone().title(" Language "));
+        language.set_cursor_line_style(style.clone());
         let mut selector = TextArea::default();
         selector.set_placeholder_text(" Enter tags");
         selector.set_block(block.clone());
-
-        // TODO: Handle non existing file
-        let root = Root::default();
+        selector.set_cursor_line_style(style.clone());
 
         Self {
             id: String::new(),
@@ -490,13 +590,15 @@ impl Default for Import {
             start,
             end,
             title,
+            desc,
             selector,
             language,
             files: FileList::default(),
             popped: false,
             valid: false,
             moment: Instant::now(),
-            root,
+            timestamp,
+            tags: TagsList::default(),
         }
     }
 }

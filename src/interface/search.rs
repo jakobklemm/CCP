@@ -123,7 +123,7 @@ impl Search {
                 let t = format!(
                     "{} - {} - {} - {}",
                     x.id.0,
-                    x.timestamp.naive_local().to_string(),
+                    x.timestamp.format("%d-%m-%Y").to_string(),
                     x.title,
                     x.text
                 );
@@ -157,6 +157,9 @@ impl EntryList {
     }
 
     fn next(&mut self) {
+        if self.items.len() == 0 {
+            return;
+        }
         let i = match self.state.selected() {
             Some(i) => (i + 1) % self.items.len(),
             None => 0,
@@ -165,6 +168,9 @@ impl EntryList {
     }
 
     fn previous(&mut self) {
+        if self.items.len() == 0 {
+            return;
+        }
         let i = match self.state.selected() {
             Some(i) => (self.items.len() + i - 1) % self.items.len(),
             None => 0,
