@@ -16,6 +16,7 @@ mod interface;
 mod metadata;
 mod processor;
 mod root;
+mod store;
 mod terminal;
 mod update;
 mod util;
