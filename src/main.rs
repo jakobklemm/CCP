@@ -39,11 +39,11 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 lazy_static! {
+    pub static ref ROOT: String = std::env::var("CCP_ROOT").unwrap_or("/temp".to_string());
     pub static ref DATABASE: Database = {
-        let root = std::env::var("CCP_ROOT").unwrap_or("/database".to_string());
-        Database::open_file(format!("{}/ccp-polo.db", root)).expect("Unable to open database")
+        Database::open_file(format!("{}/ccp-polo.db", ROOT.as_str()))
+            .expect("Unable to open database")
     };
-    pub static ref ROOT: String = std::env::var("CCP_ROOT").unwrap_or("/database".to_string());
     pub static ref SCHEMA: Schema = DB::schema();
     pub static ref INDEX: Index = {
         let path = format!("{}/db/", ROOT.as_str());
