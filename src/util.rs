@@ -1,7 +1,5 @@
 //! Utility functions
 
-use crate::database::Database;
-use crate::Config;
 use crate::DATABASE;
 use crate::ROOT;
 use polodb_core::bson::doc;
@@ -23,22 +21,7 @@ use tantivy::Index;
 pub fn ensure_configured() -> Result<()> {
     let path = format!("{}/db/", ROOT.as_str());
     let _ = fs::create_dir_all(path.clone());
-
-    let schema = Database::schema();
-    let _ = Index::create_in_dir(path, schema);
-
-    let col = DATABASE.collection::<Config>("config");
-    let config = col.find_one(doc! {
-        "_id": "CONFIG"
-    })?;
-    match config {
-        Some(_c) => Ok(()),
-        None => {
-            let config = Config::default();
-            let _ = col.insert_one(config);
-            Ok(())
-        }
-    }
+    Ok(())
 }
 
 pub fn terminal_startup() -> Result<()> {

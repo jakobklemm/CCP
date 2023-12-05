@@ -32,6 +32,8 @@ use header::Header;
 mod footer;
 use footer::Footer;
 
+mod list;
+
 pub type TextArea = TuiTextArea<'static>;
 
 pub const STATES: i32 = 5;

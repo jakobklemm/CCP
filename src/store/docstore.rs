@@ -6,7 +6,7 @@ use serde::{de::DeserializeOwned, Serialize};
 
 use crate::ROOT;
 
-use super::item::Item;
+use super::Entity;
 
 pub struct DocStore {
     pub database: Database,
@@ -20,14 +20,14 @@ impl DocStore {
         })
     }
 
-    pub fn insert<E: Item>(&self, item: E) -> Result<()> {
+    pub fn insert<E: Entity>(&self, item: E) -> Result<()> {
         let col = self.database.collection::<E>(E::collection());
         let _ = col.insert_one(item)?;
 
         Ok(())
     }
 
-    pub fn get_one<E: Item + DeserializeOwned>(&self, query: Document) -> Result<E> {
+    pub fn get_one<E: Entity + DeserializeOwned>(&self, query: Document) -> Result<E> {
         let col = self.database.collection::<E>(E::collection());
         if let Some(e) = col.find_one(query)? {
             Ok(e)
@@ -36,7 +36,7 @@ impl DocStore {
         }
     }
 
-    pub fn get_many<E: Item + DeserializeOwned>(&self, query: Document) -> Result<Vec<E>> {
+    pub fn get_many<E: Entity + DeserializeOwned>(&self, query: Document) -> Result<Vec<E>> {
         let col = self.database.collection::<E>(E::collection());
         // TODO: Iterator trait bounds not met?
         let res = col.find(query)?;
@@ -44,13 +44,13 @@ impl DocStore {
         todo!()
     }
 
-    pub fn get_all<E: Item + DeserializeOwned>(&self) -> Result<Vec<E>> {
+    pub fn get_all<E: Entity + DeserializeOwned>(&self) -> Result<Vec<E>> {
         let col = self.database.collection::<E>(E::collection());
         // if let Some(e) = col.find(None)? {
         todo!()
     }
 
-    pub fn update_one<E: Item>(&self, query: Document, changes: Document) -> Result<()> {
+    pub fn update_one<E: Entity>(&self, query: Document, changes: Document) -> Result<()> {
         let col = self.database.collection::<E>(E::collection());
         let _ = col.update_one(query, changes)?;
 

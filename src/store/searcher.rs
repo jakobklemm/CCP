@@ -10,14 +10,14 @@ use anyhow::Result;
 use tantivy::{
     collector::TopDocs,
     query::QueryParser,
-    schema::{NumericOptions, Schema, STORED, TEXT},
+    schema::{NumericOptions, Schema, INDEXED, STORED, TEXT},
     DateOptions, DateTimePrecision, Document, Index, IndexReader, IndexWriter, ReloadPolicy,
 };
 
 use crate::ROOT;
 
 pub struct Searcher {
-    schema: Schema,
+    pub schema: Schema,
     index: Index,
     writer: Arc<Mutex<IndexWriter>>,
     reader: IndexReader,
@@ -26,7 +26,7 @@ pub struct Searcher {
 impl Searcher {
     pub fn new() -> Result<Self> {
         let schema = Self::schema();
-        let path = format!("{}/store/tantivy", ROOT.as_str());
+        let path = format!("{}/store/tantivy/", ROOT.as_str());
         let _ = fs::create_dir_all(path.clone());
         let index = match Index::create_in_dir(path.clone(), schema.to_owned()) {
             Ok(i) => i,
@@ -74,9 +74,9 @@ impl Searcher {
         Ok(())
     }
 
-    pub fn search(&self, query: &str) -> Result<Vec<Document>> {
+    pub fn search(&self, query: &str, limit: usize) -> Result<Vec<Document>> {
         let title = self.schema.get_field("title")?;
-        let text = self.schema.get_field("text")?;
+        let text = self.schema.get_field("transcript")?;
         let tags = self.schema.get_field("tags")?;
         let _ts = self.schema.get_field("timestamp")?;
         let _id = self.schema.get_field("id")?;
@@ -91,7 +91,7 @@ impl Searcher {
         parser.set_field_fuzzy(text, false, 2, false);
         let query = parser.parse_query(query)?;
 
-        let docs = searcher.search(&query, &TopDocs::with_limit(55))?;
+        let docs = searcher.search(&query, &TopDocs::with_limit(limit))?;
 
         let mut found = Vec::with_capacity(docs.len());
         for (_s, addr) in docs {
@@ -103,25 +103,26 @@ impl Searcher {
         Ok(found)
     }
 
-    fn schema() -> Schema {
+    pub fn schema() -> Schema {
         let mut builder = Schema::builder();
 
-        builder.add_text_field("title", TEXT | STORED);
-        builder.add_text_field("text", TEXT | STORED);
-        builder.add_text_field("tags", TEXT | STORED);
+        builder.add_text_field("title", TEXT);
+        builder.add_text_field("transcript", TEXT);
+        builder.add_text_field("tags", TEXT);
 
         let nums = NumericOptions::default()
             .set_indexed()
             .set_stored()
             .set_fast();
 
-        builder.add_i64_field("id", nums.clone());
+        let notstored = NumericOptions::default().set_indexed().set_fast();
 
-        builder.add_f64_field("size", nums.clone());
-        builder.add_f64_field("duration", nums);
+        builder.add_i64_field("id", nums);
+
+        builder.add_f64_field("size", notstored.clone());
+        builder.add_f64_field("duration", notstored);
 
         let dates = DateOptions::default()
-            .set_stored()
             .set_indexed()
             .set_precision(DateTimePrecision::Seconds);
         builder.add_date_field("timestamp", dates);

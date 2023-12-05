@@ -1,7 +1,9 @@
 //! # Config
 
-use super::item::Item;
 use serde::{Deserialize, Serialize};
+use tantivy::schema::{self, Schema};
+
+use super::Entity;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Config {
@@ -25,12 +27,12 @@ impl Default for Config {
     }
 }
 
-impl Item for Config {
+impl Entity for Config {
     fn collection() -> &'static str {
         "system"
     }
 
-    fn to_document(&self) -> anyhow::Result<tantivy::Document> {
+    fn to_document(&self, schema: &Schema) -> anyhow::Result<tantivy::Document> {
         panic!("DO NOT INSERT CONFIG INTO FTS STORE.")
     }
 }

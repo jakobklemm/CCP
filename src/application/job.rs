@@ -1,0 +1,5 @@
+//! # Job
+
+pub struct Job {
+
+}
