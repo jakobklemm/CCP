@@ -13,14 +13,17 @@ use tui_textarea::TextArea;
 
 pub mod actions;
 pub mod entry;
+mod filelist;
 pub mod id;
 pub mod indexed;
 pub mod job;
 pub mod metadata;
 mod processor;
 pub mod tag;
+mod timestamp;
 
 pub use entry::Entry;
+pub use filelist::load;
 pub use metadata::Metadata;
 
 #[derive(Debug, Default)]
