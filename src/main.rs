@@ -36,6 +36,11 @@ fn main() -> Result<()> {
     // let _ = manual();
     // println!("test");
 
+    for _ in 1..15 {
+        let e = Entry::default();
+        let _ = DATABASE.insert_indexed(e);
+    }
+
     // let res: Vec<Entry> = DATABASE.search("*")?;
 
     // println!("{:?}", res);

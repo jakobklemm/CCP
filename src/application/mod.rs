@@ -11,16 +11,17 @@ use ratatui::{
 use std::time::Instant;
 use tui_textarea::TextArea;
 
+pub mod actions;
 pub mod entry;
 pub mod id;
-mod job;
-// mod metadata;
-// mod processor;
-pub mod actions;
 pub mod indexed;
+pub mod job;
+pub mod metadata;
+mod processor;
 pub mod tag;
 
 pub use entry::Entry;
+pub use metadata::Metadata;
 
 #[derive(Debug, Default)]
 pub struct App {
