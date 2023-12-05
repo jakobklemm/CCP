@@ -1,7 +1,5 @@
 //! Application
 
-use crate::database::Database;
-use crate::entry::Entry;
 use crate::interface::Render;
 use crate::interface::{Interface, State};
 use anyhow::Result;
@@ -12,6 +10,17 @@ use ratatui::{
 };
 use std::time::Instant;
 use tui_textarea::TextArea;
+
+pub mod entry;
+pub mod id;
+mod job;
+// mod metadata;
+// mod processor;
+pub mod actions;
+pub mod indexed;
+pub mod tag;
+
+pub use entry::Entry;
 
 #[derive(Debug, Default)]
 pub struct App {
