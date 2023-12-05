@@ -17,6 +17,7 @@ pub struct Entry {
     #[serde(rename = "_id")]
     id: Id,
     title: String,
+    description: String,
     transcript: String,
     date: NaiveDate,
     tags: Vec<Tag>,
@@ -59,7 +60,8 @@ impl Default for Entry {
         Self {
             id: Id::default(),
             title: lipsum_words_with_rng(thread_rng(), 6),
-            transcript: lipsum_with_rng(thread_rng(), 24),
+            description: lipsum_words_with_rng(thread_rng(), 18),
+            transcript: lipsum_with_rng(thread_rng(), 64),
             date: Default::default(),
             tags: Default::default(),
             file: Default::default(),
@@ -97,6 +99,7 @@ impl Entity for Entry {
     fn to_document(&self, schema: &Schema) -> Result<Document> {
         let id = schema.get_field("id")?;
         let title = schema.get_field("title")?;
+        let desc = schema.get_field("description")?;
         let transcript = schema.get_field("transcript")?;
         let tags = schema.get_field("tags")?;
         let time = schema.get_field("timestamp")?;
@@ -107,6 +110,7 @@ impl Entity for Entry {
 
         doc.add_text(title, self.title.clone());
         doc.add_text(transcript, self.transcript.clone());
+        doc.add_text(desc, self.description.clone());
         doc.add_i64(id, self.id.get());
         doc.add_f64(size, self.file.size);
         doc.add_f64(duration, self.file.duration);

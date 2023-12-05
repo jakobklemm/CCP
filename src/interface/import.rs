@@ -5,6 +5,7 @@ use std::{
     time::{Instant, SystemTime, UNIX_EPOCH},
 };
 
+use crate::application::Metadata;
 use crate::{
     interface::{Render, TextArea},
     update::control,
@@ -33,7 +34,7 @@ pub struct Import {
     // desc: TextArea,
     // selector: TextArea,
     // language: TextArea,
-    // files: FileList,
+    files: ItemList<Metadata>,
     // popped: bool,
     // valid: bool,
     // id: String,
@@ -50,6 +51,8 @@ struct FileList {
 }
 
 use std::fs;
+
+use super::list::ItemList;
 
 // impl FileList {
 //     fn next(&mut self) {
