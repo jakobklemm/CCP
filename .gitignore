@@ -6,3 +6,6 @@ temp/
 *.wal
 db/
 *.json
+data/
+store/
+
