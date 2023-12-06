@@ -81,10 +81,7 @@ impl Render for Import {
                 self.meta.popped = false;
             } else {
                 let (text, style) = if self.meta.valid {
-                    (
-                        format!("Job {} created!", self.id),
-                        Style::default().fg(Color::Green),
-                    )
+                    (format!("Job created!"), Style::default().fg(Color::Green))
                 } else {
                     (format!("Invalid inputs!"), Style::default().fg(Color::Red))
                 };
@@ -127,11 +124,11 @@ impl Render for Import {
             }
             5 => {
                 self.reset_all();
-                self.desc.set_block(accept.title(" Description "));
+                self.description.set_block(accept.title(" Description "));
             }
             6 => {
                 self.reset_all();
-                self.selector.set_block(accept.title(" Enter Tags "));
+                self.tags.set_block(accept.title(" Enter Tags "));
             }
             _ => {}
         }
@@ -152,59 +149,80 @@ impl Render for Import {
 
     /// TODO: Handle inner swap to lower block
     fn input(&mut self, key: KeyEvent) {
-        // match key.code {
-        //     KeyCode::Tab => {
-        //         self.focus_next();
-        //     }
-        //     KeyCode::BackTab => {
-        //         self.focus_prev();
-        //     }
-        //     KeyCode::Down if control(&key) => {
-        //         self.focus_next();
-        //     }
-        //     KeyCode::Up if control(&key) => {
-        //         self.focus_prev();
-        //     }
-        //     KeyCode::Char('n') if key.modifiers == KeyModifiers::CONTROL => {
-        //         self.files.next();
-        //     }
-        //     KeyCode::Char('p') if key.modifiers == KeyModifiers::CONTROL => {
-        //         self.files.previous();
-        //     }
-        //     KeyCode::Char('s') if key.modifiers == KeyModifiers::CONTROL => {
-        //         self.save_job();
-        //     }
-        //     KeyCode::Char('j') if key.modifiers == KeyModifiers::CONTROL => {
-        //         self.tags.next();
-        //     }
-        //     KeyCode::Char('k') if key.modifiers == KeyModifiers::CONTROL => {
-        //         self.tags.previous();
-        //     }
-        //     KeyCode::Enter => {
-        //         // Submit selected tag
-        //         if let Some(i) = self.tags.state.selected() {
-        //             let s = self.tags.items.get(i).expect("Invalid tag list state!");
-        //             let _ = self.selector.insert_str(s);
-        //             self.current = 6;
-        //         }
-        //     }
-        //     _ => {
-        //         match self.current {
-        //             0 => self.timestamp.input(key),
-        //             1 => self.start.input(key),
-        //             2 => self.end.input(key),
-        //             3 => self.title.input(key),
-        //             4 => self.language.input(key),
-        //             5 => self.desc.input(key),
-        //             6 => self.selector.input(key),
-        //             _ => false,
-        //         };
-        //     }
-        // }
+        match key.code {
+            KeyCode::Tab => {
+                self.focus_next();
+            }
+            KeyCode::BackTab => {
+                self.focus_prev();
+            }
+            KeyCode::Down if control(&key) => {
+                self.focus_next();
+            }
+            KeyCode::Up if control(&key) => {
+                self.focus_prev();
+            }
+            KeyCode::Char('n') if key.modifiers == KeyModifiers::CONTROL => {
+                self.files.next();
+                self.reset_timestamp();
+                // TODO: Update timestamp (maybe?)
+            }
+            KeyCode::Char('p') if key.modifiers == KeyModifiers::CONTROL => {
+                self.files.previous();
+                self.reset_timestamp();
+                // TODO: Update timestamp (maybe?)
+            }
+            KeyCode::Char('s') if key.modifiers == KeyModifiers::CONTROL => {
+                // self.save_job();
+            }
+            KeyCode::Char('j') if key.modifiers == KeyModifiers::CONTROL => {
+                self.tagslist.next();
+            }
+            KeyCode::Char('k') if key.modifiers == KeyModifiers::CONTROL => {
+                self.tagslist.previous();
+            }
+            KeyCode::Enter => {
+                // Submit selected tag
+                if let Some(tag) = self.tagslist.get() {
+                    let _ = self.tags.insert_str(tag.to_string());
+                    self.selected = 6;
+                }
+            }
+            _ => {
+                match self.selected {
+                    0 => self.timestamp.input(key),
+                    1 => self.start.input(key),
+                    2 => self.end.input(key),
+                    3 => self.title.input(key),
+                    4 => self.language.input(key),
+                    5 => self.description.input(key),
+                    6 => self.tags.input(key),
+                    _ => false,
+                };
+            }
+        }
     }
 }
 
 impl Import {
+    fn reset_timestamp(&mut self) {
+        let block = Block::default()
+            .borders(Borders::ALL)
+            .border_type(BorderType::Rounded);
+
+        let style = Style::default();
+
+        let mut timestamp = TextArea::default();
+        timestamp.set_placeholder_text("%d-%m-%Y");
+        timestamp.set_block(block);
+        timestamp.set_cursor_line_style(style);
+
+        if let Some((file, _meta)) = self.files.get() {
+            timestamp.insert_str(parse(&file));
+        }
+        self.timestamp = timestamp;
+    }
+
     //     fn save_job(&mut self) {
     //         self.id = String::new();
     //         self.popped = true;
@@ -345,36 +363,32 @@ impl Import {
         self.render_simples(f, layout[0]);
         self.render_text(f, layout[1]);
     }
-    //
-    //     fn get_title(&self) -> String {
-    //         if let Some(i) = self.files.state.selected() {
-    //             if let Some(s) = self.files.items.get(i) {
-    //                 s.to_string()
-    //             } else {
-    //                 String::from("NO FILE SELECTED")
-    //             }
-    //         } else {
-    //             String::from("NO FILE SELECED")
-    //         }
-    //     }
-    //
-    //     fn get_meta(&self) -> Option<Metadata> {
-    //         if let Some(i) = self.files.state.selected() {
-    //             self.files.meta.get(i).cloned()
-    //         } else {
-    //             None
-    //         }
-    //     }
-    //
-    //     fn get_path(&self) -> Option<String> {
-    //         let path = format!("{}/ingest/{}", ROOT.as_str(), self.get_title());
-    //         if let Ok(_f) = File::open(path.clone()) {
-    //             Some(path)
-    //         } else {
-    //             None
-    //         }
-    //     }
-    //
+
+    fn get_title(&self) -> String {
+        if let Some(s) = self.files.get() {
+            s.0.to_string()
+        } else {
+            String::from("NO FILE SELECTED")
+        }
+    }
+
+    fn get_meta(&self) -> Option<Metadata> {
+        if let Some(i) = self.files.get() {
+            Some(i.1.clone())
+        } else {
+            None
+        }
+    }
+
+    fn get_path(&self) -> Option<String> {
+        let path = format!("{}/ingest/{}", ROOT.as_str(), self.get_title());
+        if let Ok(_f) = File::open(path.clone()) {
+            Some(path)
+        } else {
+            None
+        }
+    }
+
     fn render_simples(&mut self, f: &mut Frame, area: Rect) {
         let layout = Layout::default()
             .constraints([
@@ -406,7 +420,7 @@ impl Import {
         f.render_widget(self.language.widget(), layout[5]);
     }
     fn render_text(&mut self, f: &mut Frame, area: Rect) {
-        f.render_widget(self.desc.widget(), area);
+        f.render_widget(self.description.widget(), area);
     }
 
     fn render_lower(&mut self, f: &mut Frame, area: Rect) {
@@ -451,7 +465,7 @@ impl Import {
         );
 
         f.render_widget(para, layout[0]);
-        f.render_widget(self.selector.widget(), layout[1]);
+        f.render_widget(self.tags.widget(), layout[1]);
     }
 
     fn render_meta(&mut self, f: &mut Frame, area: Rect) {
@@ -478,7 +492,7 @@ impl Import {
     }
 }
 
-use crate::application::load;
+use crate::application::{load, parse};
 
 impl Default for Import {
     fn default() -> Self {
@@ -517,7 +531,14 @@ impl Default for Import {
         tags.set_block(block.clone());
         tags.set_cursor_line_style(style.clone());
 
-        let tagquery = DATABASE.get_all::<Tag>().unwrap_or(Vec::new());
+        // TODO: Optimize with capacity
+        let mut alltags = Vec::new();
+        let tagquery = DATABASE.get_all::<Tag>().unwrap();
+        for tag in tagquery {
+            if let Ok(t) = tag {
+                alltags.push(t);
+            }
+        }
 
         Self {
             selected: 0,
@@ -530,7 +551,7 @@ impl Default for Import {
             files: ItemList::new(load()),
             meta: Meta::default(),
             timestamp,
-            tagslist: ItemList::new(tagquery),
+            tagslist: ItemList::new(alltags),
         }
     }
 }

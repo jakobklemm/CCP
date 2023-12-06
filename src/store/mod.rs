@@ -11,7 +11,10 @@ pub use entity::Entity;
 use anyhow::Result;
 use config::Config;
 use docstore::DocStore;
-use polodb_core::bson::{doc, Document};
+use polodb_core::{
+    bson::{doc, Document},
+    ClientCursor,
+};
 use searcher::Searcher;
 use serde::de::DeserializeOwned;
 use tantivy::{schema::Schema, Document as FTSDoc};
@@ -102,11 +105,14 @@ impl Database {
         self.documents.get_one(query)
     }
 
-    pub fn get_many<E: Entity + DeserializeOwned>(&self, query: Document) -> Result<Vec<E>> {
+    pub fn get_many<E: Entity + DeserializeOwned>(
+        &self,
+        query: Document,
+    ) -> Result<ClientCursor<E>> {
         self.documents.get_many(query)
     }
 
-    pub fn get_all<E: Entity + DeserializeOwned>(&self) -> Result<Vec<E>> {
+    pub fn get_all<E: Entity + DeserializeOwned>(&self) -> Result<ClientCursor<E>> {
         self.documents.get_all()
     }
 
