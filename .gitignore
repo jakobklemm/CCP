@@ -7,5 +7,5 @@ temp/
 db/
 *.json
 data/
-store/
+/store/
 root/
