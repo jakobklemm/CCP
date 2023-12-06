@@ -33,6 +33,10 @@ impl Id {
         Ok(path)
     }
 
+    pub fn temp_path(&self) -> Result<String> {
+        Ok(format!("{}pass_1.mp4", self.temp_path()?))
+    }
+
     pub fn meta_path(&self) -> Result<String> {
         let path = format!("{}/meta/{}/", ROOT.as_str(), self.get_s());
         let last = format!("{}.json", self.get());

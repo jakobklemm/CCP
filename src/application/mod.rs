@@ -18,6 +18,7 @@ pub mod id;
 pub mod indexed;
 pub mod job;
 pub mod metadata;
+mod parse_date;
 mod processor;
 pub mod tag;
 mod timestamp;
@@ -25,6 +26,7 @@ mod timestamp;
 pub use entry::Entry;
 pub use filelist::load;
 pub use metadata::Metadata;
+pub use parse_date::parse;
 
 #[derive(Debug, Default)]
 pub struct App {
