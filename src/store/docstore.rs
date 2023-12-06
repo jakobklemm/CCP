@@ -1,7 +1,7 @@
 //! # DocStore
 
 use anyhow::{anyhow, Result};
-use polodb_core::{bson::Document, Database};
+use polodb_core::{bson::Document, ClientCursor, Database};
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::ROOT;
@@ -36,18 +36,19 @@ impl DocStore {
         }
     }
 
-    pub fn get_many<E: Entity + DeserializeOwned>(&self, query: Document) -> Result<Vec<E>> {
+    pub fn get_many<E: Entity + DeserializeOwned>(
+        &self,
+        query: Document,
+    ) -> Result<ClientCursor<E>> {
         let col = self.database.collection::<E>(E::collection());
-        // TODO: Iterator trait bounds not met?
         let res = col.find(query)?;
-
-        todo!()
+        Ok(res)
     }
 
-    pub fn get_all<E: Entity + DeserializeOwned>(&self) -> Result<Vec<E>> {
+    pub fn get_all<E: Entity + DeserializeOwned>(&self) -> Result<ClientCursor<E>> {
         let col = self.database.collection::<E>(E::collection());
-        // if let Some(e) = col.find(None)? {
-        todo!()
+        let found = col.find(None)?;
+        Ok(found)
     }
 
     pub fn update_one<E: Entity>(&self, query: Document, changes: Document) -> Result<()> {

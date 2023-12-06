@@ -129,7 +129,7 @@ impl Job {
             .arg("--model")
             .arg("medium")
             .arg("-o")
-            .arg(self.output.temp_dir())
+            .arg(self.output.temp_dir()?)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
@@ -144,7 +144,7 @@ impl Job {
             let _ = snd.send(Status::Text(i as i32)).unwrap();
         }
 
-        let f: Vec<String> = std::fs::read_to_string(self.output.transcript())
+        let f: Vec<String> = std::fs::read_to_string("")
             .unwrap()
             .split("\n")
             .map(String::from)

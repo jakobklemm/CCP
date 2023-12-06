@@ -26,5 +26,5 @@ pub fn load() -> Vec<(String, Metadata)> {
         }
     }
 
-    todo!()
+    items
 }

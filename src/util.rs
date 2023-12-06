@@ -19,8 +19,16 @@ use std::io::stdout;
 use tantivy::Index;
 
 pub fn ensure_configured() -> Result<()> {
-    let path = format!("{}/db/", ROOT.as_str());
-    let _ = fs::create_dir_all(path.clone());
+    let path1 = format!("{}/store/", ROOT.as_str());
+    let path2 = format!("{}/ingest/", ROOT.as_str());
+    let path3 = format!("{}/data/", ROOT.as_str());
+    let path4 = format!("{}/meta/", ROOT.as_str());
+
+    let _ = fs::create_dir_all(path1);
+    let _ = fs::create_dir_all(path2);
+    let _ = fs::create_dir_all(path3);
+    let _ = fs::create_dir_all(path4);
+
     Ok(())
 }
 
