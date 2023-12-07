@@ -5,7 +5,7 @@ use std::{
     time::{Instant, SystemTime, UNIX_EPOCH},
 };
 
-use crate::application::{tag::Tag, Metadata};
+use crate::application::{actions, tag::Tag, Metadata};
 use crate::{
     interface::{Render, TextArea},
     update::control,
@@ -180,6 +180,11 @@ impl Render for Import {
             }
             KeyCode::Char('k') if key.modifiers == KeyModifiers::CONTROL => {
                 self.tagslist.previous();
+            }
+            KeyCode::Char('o') if key.modifiers == KeyModifiers::CONTROL => {
+                if let Some(path) = self.get_path() {
+                    let _ = actions::open_file(&path);
+                }
             }
             KeyCode::Enter => {
                 // Submit selected tag
