@@ -23,11 +23,15 @@ pub fn ensure_configured() -> Result<()> {
     let path2 = format!("{}/ingest/", ROOT.as_str());
     let path3 = format!("{}/data/", ROOT.as_str());
     let path4 = format!("{}/meta/", ROOT.as_str());
+    let path5 = format!("{}/temp/", ROOT.as_str());
+    let path6 = format!("{}/source/", ROOT.as_str());
 
     let _ = fs::create_dir_all(path1);
     let _ = fs::create_dir_all(path2);
     let _ = fs::create_dir_all(path3);
     let _ = fs::create_dir_all(path4);
+    let _ = fs::create_dir_all(path5);
+    let _ = fs::create_dir_all(path6);
 
     Ok(())
 }
