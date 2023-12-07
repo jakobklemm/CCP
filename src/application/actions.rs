@@ -21,6 +21,16 @@ pub fn open_vlc(entry: Entry) -> Result<()> {
     Ok(())
 }
 
+pub fn open_file(path: &str) -> Result<()> {
+    let _ = Command::new("vlc")
+        .arg(path)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()?;
+
+    Ok(())
+}
+
 pub fn open_nautilus(entry: Entry) -> Result<()> {
     let _ = Command::new("nautilus")
         .arg("--select")
