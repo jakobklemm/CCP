@@ -1,8 +1,6 @@
 //! Utility functions
 
-
 use crate::ROOT;
-
 
 use anyhow::Result;
 use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
@@ -16,7 +14,6 @@ use ratatui::layout::Layout;
 use ratatui::layout::Rect;
 use std::fs;
 use std::io::stdout;
-
 
 pub fn ensure_configured() -> Result<()> {
     let path1 = format!("{}/store/", ROOT.as_str());

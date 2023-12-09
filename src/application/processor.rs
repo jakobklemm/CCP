@@ -1,6 +1,5 @@
 //! Processor
 
-
 use polodb_core::bson::doc;
 
 use std::io::{BufRead, BufReader};
@@ -16,9 +15,7 @@ use super::timestamp::Timestamp;
 
 use anyhow::{anyhow, Result};
 
-
-
-use crate::{DATABASE};
+use crate::DATABASE;
 
 pub fn execute(job: Job) -> Receiver<Status> {
     let (sender, receiver) = channel();

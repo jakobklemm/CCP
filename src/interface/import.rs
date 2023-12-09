@@ -1,9 +1,6 @@
 //! # Import
 
-use std::{
-    fs::File,
-    time::{Instant},
-};
+use std::{fs::File, time::Instant};
 
 use crate::application::{actions, job::Job, tag::Tag, Metadata};
 use crate::{
@@ -69,8 +66,6 @@ impl Default for Meta {
         }
     }
 }
-
-
 
 use super::list::ItemList;
 
