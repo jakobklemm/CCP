@@ -10,7 +10,7 @@ use anyhow::Result;
 use tantivy::{
     collector::TopDocs,
     query::QueryParser,
-    schema::{NumericOptions, Schema, INDEXED, STORED, TEXT},
+    schema::{NumericOptions, Schema, TEXT},
     DateOptions, DateTimePrecision, Document, Index, IndexReader, IndexWriter, ReloadPolicy,
 };
 

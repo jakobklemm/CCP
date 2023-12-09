@@ -1,8 +1,8 @@
 //! Utility functions
 
-use crate::DATABASE;
+
 use crate::ROOT;
-use polodb_core::bson::doc;
+
 
 use anyhow::Result;
 use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
@@ -16,7 +16,7 @@ use ratatui::layout::Layout;
 use ratatui::layout::Rect;
 use std::fs;
 use std::io::stdout;
-use tantivy::Index;
+
 
 pub fn ensure_configured() -> Result<()> {
     let path1 = format!("{}/store/", ROOT.as_str());

@@ -1,6 +1,6 @@
 //! # Id
 
-use std::{env::temp_dir, fmt::format, fs};
+use std::{fs};
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};

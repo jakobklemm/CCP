@@ -29,7 +29,7 @@ impl Render for Footer {
 
         f.render_widget(p, area);
     }
-    fn input(&mut self, key: KeyEvent) {}
+    fn input(&mut self, _key: KeyEvent) {}
 }
 
 impl Default for Footer {

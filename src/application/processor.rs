@@ -1,8 +1,8 @@
 //! Processor
 
-use chrono::{Local, NaiveDate};
+
 use polodb_core::bson::doc;
-use std::fs::File;
+
 use std::io::{BufRead, BufReader};
 use std::process::{Command, Stdio};
 use std::sync::mpsc::{channel, Receiver, Sender};
@@ -15,10 +15,10 @@ use super::status::Status;
 use super::timestamp::Timestamp;
 
 use anyhow::{anyhow, Result};
-use serde::{Deserialize, Serialize};
 
-use crate::application::job::Language;
-use crate::{DATABASE, ROOT};
+
+
+use crate::{DATABASE};
 
 pub fn execute(job: Job) -> Receiver<Status> {
     let (sender, receiver) = channel();

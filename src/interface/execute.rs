@@ -2,7 +2,7 @@
 
 use std::sync::mpsc::Receiver;
 
-use super::TextArea;
+
 use crate::application::processor;
 use crate::application::status::Status;
 use crate::interface::list::ItemList;
@@ -15,7 +15,7 @@ use ratatui::widgets::Gauge;
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
-    widgets::{Block, BorderType, Borders, List, ListItem, ListState, Paragraph},
+    widgets::{Block, BorderType, Borders, List, ListItem, Paragraph},
     Frame,
 };
 

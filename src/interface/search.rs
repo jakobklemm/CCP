@@ -3,9 +3,9 @@
 use crate::interface::{Render, TextArea};
 use crate::update::control;
 use crate::DATABASE;
-use anyhow::Result;
-use chrono::SecondsFormat;
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+
+
+use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::layout::{Constraint, Direction, Layout};
 use ratatui::style::{Color, Style};
 use ratatui::widgets::{Block, BorderType, Borders, Paragraph};

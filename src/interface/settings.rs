@@ -23,5 +23,5 @@ impl Render for Settings {
         )
     }
 
-    fn input(&mut self, key: crossterm::event::KeyEvent) {}
+    fn input(&mut self, _key: crossterm::event::KeyEvent) {}
 }

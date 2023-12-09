@@ -66,17 +66,15 @@ fn parse_shadowplay(title: &str) -> String {
 }
 
 mod tests {
-    use super::*;
-
     #[test]
     fn test_parse_shadowplay() {
         let title = "Counter-strike 2 2023.12.05 - 22.14.07.02.DVR.mp4";
-        assert_eq!(parse(title), "05-12-2023");
+        assert_eq!(super::parse(title), "05-12-2023");
     }
 
     #[test]
     fn test_parse_manual() {
         let title = "10_11_23-Inferno-Retake_Clutch_AWP.mp4";
-        assert_eq!(parse(title), "10-11-2023");
+        assert_eq!(super::parse(title), "10-11-2023");
     }
 }

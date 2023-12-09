@@ -4,7 +4,7 @@
 
 use std::fs::metadata;
 
-use super::{id::Id, indexed::Indexed, job::Job, tag::Tag, timestamp::Timestamp};
+use super::{id::Id, indexed::Indexed, tag::Tag, timestamp::Timestamp};
 use crate::{store::Entity, DATABASE};
 use anyhow::{anyhow, Result};
 use chrono::NaiveDate;

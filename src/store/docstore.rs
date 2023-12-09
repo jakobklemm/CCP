@@ -2,7 +2,7 @@
 
 use anyhow::{anyhow, Result};
 use polodb_core::{bson::Document, ClientCursor, Database};
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{de::DeserializeOwned};
 
 use crate::ROOT;
 
