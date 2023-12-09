@@ -1,6 +1,10 @@
 //! # Dashboard
 
-use crate::interface::Render;
+use crate::{
+    application::{tag::Tag, Entry},
+    interface::Render,
+    DATABASE,
+};
 use crossterm::event::KeyEvent;
 use ratatui::{
     layout::{Constraint, Layout, Rect},
@@ -15,17 +19,24 @@ use tui_big_text::BigTextBuilder;
 pub struct Dashboard {
     count: u64,
     tags: u64,
-    size: f64,
+    size: u64,
 }
 
 impl Default for Dashboard {
     fn default() -> Self {
-        // TODO: Fetch data from DB
-        Self {
-            count: Default::default(),
-            tags: Default::default(),
-            size: Default::default(),
+        let mut count = 0;
+        let mut size = 0;
+        let mut tags = 0;
+        for entry in DATABASE.get_all::<Entry>().unwrap() {
+            let entry = entry.unwrap();
+            count += 1;
+            size += entry.get_meta().size;
         }
+        for _tag in DATABASE.get_all::<Tag>().unwrap() {
+            tags += 1;
+        }
+        // TODO: Fetch data from DB
+        Self { count, tags, size }
     }
 }
 
@@ -76,7 +87,7 @@ impl Dashboard {
             .alignment(Alignment::Center)
             .block(around.clone());
 
-        let lower = Paragraph::new("Bar charts").block(around);
+        let lower = Paragraph::new("TODO").block(around);
 
         f.render_widget(para, layout[0]);
         f.render_widget(lower, layout[1]);
@@ -95,7 +106,13 @@ impl Dashboard {
 
         Self::render_large(f, self.count, Color::Red, "Clips", thirds[0]);
         Self::render_large(f, self.tags, Color::Green, "Tags", thirds[1]);
-        Self::render_large(f, self.size, Color::Blue, "Size", thirds[2]);
+        Self::render_large(
+            f,
+            (self.size as f64) / 1_000_000_000.0,
+            Color::Blue,
+            "Size",
+            thirds[2],
+        );
     }
 
     fn render_large<T: Display>(
@@ -122,7 +139,7 @@ impl Dashboard {
         let mut line = vec![format!("{}", value).red().into()];
 
         if &text.to_string() == "Size" {
-            line = vec![format!("{} Gb", value).red().into()];
+            line = vec![format!("{:.1} Gb", value).red().into()];
         }
 
         let top = BigTextBuilder::default()
