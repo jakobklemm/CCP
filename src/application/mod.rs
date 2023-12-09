@@ -1,15 +1,12 @@
 //! Application
 
 use crate::interface::Render;
-use crate::interface::{Interface, State};
-use anyhow::Result;
-use crossterm::event::{KeyCode, KeyEvent};
-use ratatui::{
-    style::Style,
-    widgets::{Block, Borders, List, ListState},
-};
-use std::time::Instant;
-use tui_textarea::TextArea;
+use crate::interface::{Interface};
+
+use crossterm::event::{KeyEvent};
+
+
+
 
 pub mod actions;
 pub mod entry;

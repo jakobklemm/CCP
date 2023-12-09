@@ -57,7 +57,7 @@ impl Render for Dashboard {
     }
 
     /// Dashboard isn't interactive
-    fn input(&mut self, key: KeyEvent) {}
+    fn input(&mut self, _key: KeyEvent) {}
 }
 
 impl Dashboard {

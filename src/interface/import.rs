@@ -2,7 +2,7 @@
 
 use std::{
     fs::File,
-    time::{Instant, SystemTime, UNIX_EPOCH},
+    time::{Instant},
 };
 
 use crate::application::{actions, job::Job, tag::Tag, Metadata};
@@ -11,13 +11,13 @@ use crate::{
     update::control,
     util, DATABASE, ROOT,
 };
-use chrono::{format::DelayedFormat, DateTime, Local, SecondsFormat};
+
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout},
     prelude::Rect,
-    style::{Color, Modifier, Style},
-    widgets::{block::Title, Block, BorderType, Borders, List, ListItem, ListState, Paragraph},
+    style::{Color, Style},
+    widgets::{block::Title, Block, BorderType, Borders, List, ListItem, Paragraph},
     Frame,
 };
 
@@ -70,7 +70,7 @@ impl Default for Meta {
     }
 }
 
-use std::fs;
+
 
 use super::list::ItemList;
 

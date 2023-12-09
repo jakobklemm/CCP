@@ -31,7 +31,7 @@ impl Render for Header {
         self.render_fps(f, bar[1]);
     }
     /// TODO: Handle C-h and C-l for next tab.
-    fn input(&mut self, key: KeyEvent) {}
+    fn input(&mut self, _key: KeyEvent) {}
 }
 
 impl Header {
