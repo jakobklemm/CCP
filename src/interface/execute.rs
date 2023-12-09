@@ -9,6 +9,7 @@ use crate::interface::list::ItemList;
 use crate::DATABASE;
 use crate::{application::job::Job, interface::Render};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use polodb_core::bson::doc;
 use ratatui::style::{Modifier, Stylize};
 use ratatui::widgets::Gauge;
 use ratatui::{
@@ -20,6 +21,7 @@ use ratatui::{
 
 #[derive(Debug)]
 pub struct Execute {
+    count: usize,
     current: Option<Job>,
     receiver: Option<Receiver<Status>>,
     status: Status,
@@ -29,6 +31,7 @@ pub struct Execute {
 impl Clone for Execute {
     fn clone(&self) -> Self {
         Self {
+            count: self.count + 1,
             current: self.current.clone(),
             receiver: None,
             status: self.status.clone(),
@@ -41,7 +44,7 @@ impl Default for Execute {
     fn default() -> Self {
         let mut list = ItemList::default();
         let mut jobs: Vec<Job> = Vec::new();
-        let found = DATABASE.get_all().unwrap();
+        let found = DATABASE.get_many(doc! {"done": false}).unwrap();
         for job in found {
             if let Ok(j) = job {
                 jobs.push(j);
@@ -49,6 +52,7 @@ impl Default for Execute {
         }
         list.set(jobs);
         Self {
+            count: 0,
             list,
             current: None,
             receiver: None,
@@ -61,7 +65,7 @@ impl Render for Execute {
     fn render(&mut self, f: &mut Frame, area: Rect) {
         // TODO: Does this work?
         if let Some(recv) = &self.receiver {
-            if let Ok(s) = recv.recv() {
+            if let Ok(s) = recv.try_recv() {
                 self.status = s;
             }
         }
@@ -70,6 +74,16 @@ impl Render for Execute {
             Status::Complete(_) => {
                 self.current = None;
                 self.receiver = None;
+                let mut list = ItemList::default();
+                let mut jobs: Vec<Job> = Vec::new();
+                let found = DATABASE.get_many(doc! {"done": false}).unwrap();
+                for job in found {
+                    if let Ok(j) = job {
+                        jobs.push(j);
+                    }
+                }
+                list.set(jobs);
+                self.list = list;
             }
             _ => {}
         }
@@ -150,7 +164,7 @@ impl Execute {
                     .add_modifier(Modifier::ITALIC),
             )
             .use_unicode(true)
-            .percent(self.status.get_first());
+            .percent(self.status.get_perc().0);
 
         f.render_widget(gauge, area);
     }
@@ -165,7 +179,7 @@ impl Execute {
                     .add_modifier(Modifier::ITALIC),
             )
             .use_unicode(true)
-            .percent(self.status.get_second());
+            .percent(self.status.get_perc().1);
 
         f.render_widget(gauge, area);
     }
@@ -180,7 +194,7 @@ impl Execute {
                     .add_modifier(Modifier::ITALIC),
             )
             .use_unicode(true)
-            .percent(self.status.get_third());
+            .percent(self.status.get_perc().2);
 
         f.render_widget(gauge, area);
     }

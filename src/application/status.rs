@@ -12,24 +12,12 @@ pub enum Status {
 }
 
 impl Status {
-    pub fn get_first(&self) -> u16 {
+    pub fn get_perc(&self) -> (u16, u16, u16) {
         match self {
-            Self::First(i) => *i,
-            _ => 0,
-        }
-    }
-
-    pub fn get_second(&self) -> u16 {
-        match self {
-            Self::Second(i) => *i,
-            _ => 0,
-        }
-    }
-
-    pub fn get_third(&self) -> u16 {
-        match self {
-            Self::Third(i) => *i,
-            _ => 0,
+            Self::First(i) => (*i, 0, 0),
+            Self::Second(i) => (100, *i, 0),
+            Self::Third(i) => (100, 100, *i),
+            _ => (0, 0, 0),
         }
     }
 }

@@ -119,4 +119,8 @@ impl Database {
     pub fn update_one<E: Entity>(&self, query: Document, changes: Document) -> Result<()> {
         self.documents.update_one::<E>(query, changes)
     }
+
+    pub fn update_many<E: Entity>(&self, query: Document, changes: Document) -> Result<()> {
+        self.documents.update_many::<E>(query, changes)
+    }
 }
