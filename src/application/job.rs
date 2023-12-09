@@ -1,12 +1,12 @@
 //! # Job
 
 use anyhow::{anyhow, Result};
-use chrono::NaiveDate;
+use chrono::{Local, NaiveDate};
 
-use crate::{application::tag::Tag, store::Entity, DATABASE};
+use crate::{application::tag::Tag, store::Entity, DATABASE, ROOT};
 use serde::{Deserialize, Serialize};
 
-use super::timestamp::Timestamp;
+use super::{id::Id, timestamp::Timestamp, Entry};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Job {
@@ -18,6 +18,34 @@ pub struct Job {
     language: Language,
     description: String,
     tags: Vec<Tag>,
+}
+
+impl ToString for Job {
+    fn to_string(&self) -> String {
+        format!(
+            "{} - {} : {} ({}-{})",
+            self.date.to_string(),
+            self.title,
+            self.description,
+            self.start.to_string(),
+            self.end.to_string()
+        )
+    }
+}
+
+impl Default for Job {
+    fn default() -> Self {
+        Self {
+            file: format!("{}/ingest/test.mp4", ROOT.as_str()),
+            start: Timestamp::from_str("00:01:00").unwrap(),
+            end: Timestamp::from_str("00:01:45").unwrap(),
+            date: Local::now().date_naive(),
+            title: format!("Some Test Clip"),
+            description: format!("some more lipsum stuff"),
+            language: Language::DE,
+            tags: vec![Tag::new("cs2").unwrap()],
+        }
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -110,6 +138,10 @@ impl Job {
             }
         };
 
+        if title == "" || description == "" {
+            return Err(anyhow!("invalid job"));
+        }
+
         let job = Self {
             file,
             start,
@@ -123,6 +155,36 @@ impl Job {
 
         let _ = DATABASE.insert(job.clone())?;
         Ok(job)
+    }
+
+    pub fn start(&self) -> Timestamp {
+        self.start.clone()
+    }
+
+    pub fn end(&self) -> Timestamp {
+        self.end.clone()
+    }
+
+    pub fn title(&self) -> String {
+        self.title.to_string()
+    }
+
+    pub fn get_file(&self) -> String {
+        self.file.to_string()
+    }
+
+    pub fn to_entry(&self, id: Id, text: String) -> Result<Entry> {
+        let duration = self.end - self.start;
+        Entry::new(
+            id,
+            &self.file,
+            self.title.clone(),
+            self.description.clone(),
+            text,
+            self.date,
+            self.tags.clone(),
+            duration,
+        )
     }
 }
 

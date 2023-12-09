@@ -4,7 +4,7 @@ use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 use std::ops::{Div, Sub};
 
-#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Timestamp {
     hours: i32,
     minutes: i32,
@@ -43,7 +43,7 @@ impl ToString for Timestamp {
 }
 
 impl Timestamp {
-    fn to_seconds(&self) -> i32 {
+    pub fn to_seconds(&self) -> i32 {
         3600 * self.hours + 60 * self.minutes + self.seconds
     }
 

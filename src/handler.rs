@@ -6,6 +6,8 @@ use std::sync::mpsc::{channel, Receiver, Sender};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
+use crate::application::status::Status;
+
 #[derive(Clone, Debug)]
 pub enum Event {
     Tick,
