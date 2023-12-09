@@ -4,7 +4,6 @@ use crate::interface::{Render, TextArea};
 use crate::update::control;
 use crate::DATABASE;
 
-
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::layout::{Constraint, Direction, Layout};
 use ratatui::style::{Color, Style};
