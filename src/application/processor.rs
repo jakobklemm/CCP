@@ -11,6 +11,8 @@ use super::timestamp::Timestamp;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
+use crate::application::job::Language;
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Job {
     start: Timestamp,
@@ -22,38 +24,6 @@ pub struct Job {
     input: String,
     output: Id,
     language: Language,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum Language {
-    EN,
-    DE,
-}
-
-impl Language {
-    pub fn from_str(s: &str) -> Language {
-        let s = s.trim();
-        match s {
-            "en" => Self::EN,
-            _ => Self::DE,
-        }
-    }
-
-    pub fn from_input(lines: &[String]) -> Language {
-        for l in lines {
-            return Self::from_str(l);
-        }
-        Self::default()
-    }
-}
-
-impl ToString for Language {
-    fn to_string(&self) -> String {
-        match self {
-            Language::EN => String::from("German"),
-            Language::DE => String::from("Language"),
-        }
-    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -90,8 +60,8 @@ impl Job {
         tags: Vec<String>,
     ) -> Option<Self> {
         Some(Self {
-            start: Timestamp::from_str(start)?,
-            end: Timestamp::from_str(end)?,
+            start: Timestamp::from_str(start).unwrap(),
+            end: Timestamp::from_str(end).unwrap(),
             input: input.to_string(),
             title: title.to_string(),
             desc: desc.to_string(),
@@ -197,7 +167,7 @@ impl Job {
                 Some(t) => t,
                 None => String::new(),
             };
-            if let Some(ts) = Timestamp::from_str(times) {
+            if let Ok(ts) = Timestamp::from_str(times) {
                 let curr = ts - self.start;
                 let perc = curr / duration;
                 // println!("PROGRESS: {:?}", perc);
@@ -227,10 +197,4 @@ fn get_timestamp(line: String) -> Option<String> {
     }
     let p = Timestamp::from_str(parts.get(1).unwrap());
     return Some(parts.get(1).unwrap().to_string());
-}
-
-impl Default for Language {
-    fn default() -> Self {
-        Self::DE
-    }
 }
