@@ -57,4 +57,11 @@ impl DocStore {
 
         Ok(())
     }
+
+    pub fn update_many<E: Entity>(&self, query: Document, changes: Document) -> Result<()> {
+        let col = self.database.collection::<E>(E::collection());
+        let _ = col.update_many(query, changes)?;
+
+        Ok(())
+    }
 }

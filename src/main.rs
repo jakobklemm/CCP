@@ -62,6 +62,42 @@ fn main() -> Result<()> {
     //     println!("PROG: {:?}", msg);
     // }
 
+    // let job = Job::default();
+    //
+    // let mut count = 0;
+    //
+    // for j in DATABASE.get_all::<Job>().unwrap() {
+    //     count += 1;
+    //     println!("{:?}", j.unwrap());
+    // }
+    //
+    // println!("PART 1: {}", count);
+    //
+    // let _ = DATABASE.update_many::<Job>(
+    //     doc! {
+    //         "uid": "aaeab785-249b-4565-8652-b1e274b9a312",
+    //     },
+    //     doc! {
+    //         "$set": doc! {
+    //         "done": true
+    //         }
+    //     },
+    // );
+    //
+    // let mut count = 0;
+    //
+    // for j in DATABASE
+    //     .get_many::<Job>(doc! {
+    //         "done": false
+    //     })
+    //     .unwrap()
+    // {
+    //     count += 1;
+    //     println!("{:?}", j.unwrap());
+    // }
+    //
+    // println!("PART 2: {}", count);
+
     let term = Terminal::new(CrosstermBackend::new(stderr()))?;
     let events = handler::EventHandler::new(100);
     let mut tui = terminal::Terminal::new(term, events);

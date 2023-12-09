@@ -1,6 +1,8 @@
 //! Processor
 
 use chrono::{Local, NaiveDate};
+use polodb_core::bson::doc;
+use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::process::{Command, Stdio};
 use std::sync::mpsc::{channel, Receiver, Sender};
@@ -16,7 +18,7 @@ use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 
 use crate::application::job::Language;
-use crate::DATABASE;
+use crate::{DATABASE, ROOT};
 
 pub fn execute(job: Job) -> Receiver<Status> {
     let (sender, receiver) = channel();
@@ -154,6 +156,7 @@ fn third_pass(id: Id, job: Job, snd: Sender<Status>, text: String) -> Result<()>
     // 2. Move media file
     // 3. Copy SRT file
     // 4. Write Entry to all three DBs
+    // 5. Copy source file to source folder
 
     let _ = snd.send(Status::Third(0))?;
 
@@ -182,7 +185,24 @@ fn third_pass(id: Id, job: Job, snd: Sender<Status>, text: String) -> Result<()>
 
     let _ = DATABASE.insert_indexed(entry);
 
-    let _ = snd.send(Status::Third(100))?;
+    let _ = snd.send(Status::Third(80))?;
+
+    // check if source exists
+    // let source = format!("{}/source/{}", ROOT.as_str(), job.get_file());
+    // if let Ok(_f) = File::open(&source) {
+    //     // file already exists
+    // } else {
+    //     let from = format!("{}/ingest/{}", ROOT.as_str(), job.get_file());
+    //     let _ = fs::write(from, source)?;
+    // }
+
+    // mark job as done
+    let _ = DATABASE.update_many::<Job>(
+        doc! {"uid": job.uid},
+        doc! {
+            "$set": doc! {"done": true}
+        },
+    )?;
 
     Ok(())
 }
@@ -199,7 +219,7 @@ fn get_timestamp(line: String) -> Option<String> {
     if parts.get(0).unwrap().to_string() != "out_time" {
         return None;
     }
-    let p = Timestamp::from_str(parts.get(1).unwrap());
+    // let p = Timestamp::from_str(parts.get(1).unwrap());
     return Some(parts.get(1).unwrap().to_string());
 }
 

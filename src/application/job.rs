@@ -2,6 +2,7 @@
 
 use anyhow::{anyhow, Result};
 use chrono::{Local, NaiveDate};
+use uuid::Uuid;
 
 use crate::{application::tag::Tag, store::Entity, DATABASE, ROOT};
 use serde::{Deserialize, Serialize};
@@ -10,6 +11,7 @@ use super::{id::Id, timestamp::Timestamp, Entry};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Job {
+    pub uid: String,
     file: String,
     start: Timestamp,
     date: NaiveDate,
@@ -18,6 +20,7 @@ pub struct Job {
     language: Language,
     description: String,
     tags: Vec<Tag>,
+    done: bool,
 }
 
 impl ToString for Job {
@@ -36,6 +39,7 @@ impl ToString for Job {
 impl Default for Job {
     fn default() -> Self {
         Self {
+            uid: Uuid::new_v4().to_string(),
             file: format!("{}/ingest/test.mp4", ROOT.as_str()),
             start: Timestamp::from_str("00:01:00").unwrap(),
             end: Timestamp::from_str("00:01:45").unwrap(),
@@ -44,6 +48,7 @@ impl Default for Job {
             description: format!("some more lipsum stuff"),
             language: Language::DE,
             tags: vec![Tag::new("cs2").unwrap()],
+            done: false,
         }
     }
 }
@@ -138,11 +143,12 @@ impl Job {
             }
         };
 
-        if title == "" || description == "" {
+        if title == "" {
             return Err(anyhow!("invalid job"));
         }
 
         let job = Self {
+            uid: Uuid::new_v4().to_string(),
             file,
             start,
             date,
@@ -151,6 +157,7 @@ impl Job {
             description,
             language,
             tags: parsed_tags,
+            done: false,
         };
 
         let _ = DATABASE.insert(job.clone())?;
