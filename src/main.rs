@@ -13,9 +13,7 @@ mod util;
 
 use crate::handler::Event;
 
-use application::{
-    App,
-};
+use application::App;
 // use crossterm::event::{self, KeyCode, KeyEventKind};
 use lazy_static::lazy_static;
 use polodb_core::bson::doc;

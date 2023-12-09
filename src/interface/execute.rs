@@ -2,7 +2,6 @@
 
 use std::sync::mpsc::Receiver;
 
-
 use crate::application::processor;
 use crate::application::status::Status;
 use crate::interface::list::ItemList;

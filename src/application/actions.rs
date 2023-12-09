@@ -7,8 +7,6 @@ use std::process::{Command, Stdio};
 
 use anyhow::Result;
 
-
-
 use super::Entry;
 
 pub fn open_vlc(entry: Entry) -> Result<()> {

@@ -6,7 +6,6 @@ use crate::interface;
 use crate::util;
 use anyhow::Result;
 
-
 pub type CrosstermTerminal = ratatui::Terminal<ratatui::backend::CrosstermBackend<std::io::Stderr>>;
 
 pub struct Terminal {

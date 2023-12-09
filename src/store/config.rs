@@ -1,7 +1,7 @@
 //! # Config
 
 use serde::{Deserialize, Serialize};
-use tantivy::schema::{Schema};
+use tantivy::schema::Schema;
 
 use super::Entity;
 

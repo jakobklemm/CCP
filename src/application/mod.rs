@@ -1,12 +1,9 @@
 //! Application
 
+use crate::interface::Interface;
 use crate::interface::Render;
-use crate::interface::{Interface};
 
-use crossterm::event::{KeyEvent};
-
-
-
+use crossterm::event::KeyEvent;
 
 pub mod actions;
 pub mod entry;
