@@ -5,13 +5,13 @@ use std::{
     time::{Instant, SystemTime, UNIX_EPOCH},
 };
 
-use crate::application::{actions, tag::Tag, Metadata};
+use crate::application::{actions, job::Job, tag::Tag, Metadata};
 use crate::{
     interface::{Render, TextArea},
     update::control,
     util, DATABASE, ROOT,
 };
-use chrono::{DateTime, Local, SecondsFormat};
+use chrono::{format::DelayedFormat, DateTime, Local, SecondsFormat};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout},
@@ -41,7 +41,7 @@ pub struct Import {
     //  Langugae input field
     language: TextArea,
     // File browser on left, (Filename, File metadata)
-    files: ItemList<(String, Metadata)>,
+    files: ItemList<(String, Option<Metadata>)>,
     // The current timestamp (real world), maybe parsed by file name
     timestamp: TextArea,
     // Selector list on bottom
@@ -147,7 +147,6 @@ impl Render for Import {
         self.render_meta(f, layout[2]);
     }
 
-    /// TODO: Handle inner swap to lower block
     fn input(&mut self, key: KeyEvent) {
         match key.code {
             KeyCode::Tab => {
@@ -173,7 +172,7 @@ impl Render for Import {
                 // TODO: Update timestamp (maybe?)
             }
             KeyCode::Char('s') if key.modifiers == KeyModifiers::CONTROL => {
-                // self.save_job();
+                self.save_job();
             }
             KeyCode::Char('j') if key.modifiers == KeyModifiers::CONTROL => {
                 self.tagslist.next();
@@ -189,7 +188,7 @@ impl Render for Import {
             KeyCode::Enter => {
                 // Submit selected tag
                 if let Some(tag) = self.tagslist.get() {
-                    let _ = self.tags.insert_str(tag.to_string());
+                    let _ = self.tags.insert_str(tag.to_string() + " ");
                     self.selected = 6;
                 }
             }
@@ -210,6 +209,54 @@ impl Render for Import {
 }
 
 impl Import {
+    fn save_job(&mut self) {
+        self.meta.popped = true;
+        self.meta.moment = Instant::now();
+        if let Some(file) = self.get_path() {
+            if let Ok(job) = Job::new(
+                file,
+                self.start.lines(),
+                self.end.lines(),
+                self.title.lines(),
+                self.description.lines(),
+                self.language.lines(),
+                self.timestamp.lines(),
+                self.tags.lines(),
+            ) {
+                self.meta.valid = true;
+            } else {
+                self.meta.valid = false;
+            }
+        } else {
+            self.meta.valid = false;
+        }
+        let deflt = Self::default();
+        self.title = deflt.title;
+        self.description = deflt.description;
+        self.timestamp = deflt.timestamp;
+        self.start = deflt.start;
+        self.end = deflt.end;
+        self.tags = deflt.tags;
+        self.language = deflt.language;
+        self.selected = 0;
+    }
+
+    fn reset_all(&mut self) {
+        let block = Block::default()
+            .style(Style::default().fg(Color::Gray))
+            .borders(Borders::ALL)
+            .border_type(BorderType::Rounded);
+
+        self.timestamp.set_block(block.clone().title(" Timestamp "));
+        self.start.set_block(block.clone().title(" Start Time "));
+        self.end.set_block(block.clone().title(" End Time "));
+        self.title.set_block(block.clone().title(" Enter Title "));
+        self.description
+            .set_block(block.clone().title(" Description "));
+        self.language.set_block(block.clone().title(" Language "));
+        self.tags.set_block(block.clone().title(" Enter Tags "));
+    }
+
     fn reset_timestamp(&mut self) {
         let block = Block::default()
             .borders(Borders::ALL)
@@ -226,98 +273,6 @@ impl Import {
             timestamp.insert_str(parse(&file));
         }
         self.timestamp = timestamp;
-    }
-
-    //     fn save_job(&mut self) {
-    //         self.id = String::new();
-    //         self.popped = true;
-    //         self.moment = Instant::now();
-    //         let start = Timestamp::from_input(self.start.lines());
-    //         let end = Timestamp::from_input(self.end.lines());
-    //         let timestamp = {
-    //             let first = self.timestamp.lines().get(0);
-    //             if first.is_none() {
-    //                 self.valid = false;
-    //                 return;
-    //             }
-    //             first.unwrap()
-    //         };
-    //         // TODO: Parse Title properly
-    //         let title = {
-    //             let first = self.title.lines().get(0);
-    //             if first.is_none() {
-    //                 self.valid = false;
-    //                 return;
-    //             }
-    //             first.unwrap()
-    //         };
-    //         let desc = {
-    //             let first = self.desc.lines().get(0);
-    //             if first.is_none() {
-    //                 self.valid = false;
-    //                 return;
-    //             }
-    //             first.unwrap()
-    //         };
-    //         let lang = Language::from_input(self.language.lines());
-    //
-    //         // 0. Check if file selected
-    //         let file = {
-    //             if let Some(ind) = self.get_path() {
-    //                 ind
-    //             } else {
-    //                 self.valid = false;
-    //                 return;
-    //             }
-    //         };
-    //         // 1. Create job
-    //         let mut job = {
-    //             // TODO: Add tags
-    //             if let Some(j) = Job::new(start, end, file, title, desc, timestamp, Vec::new()) {
-    //                 self.valid = true;
-    //                 j
-    //             } else {
-    //                 self.valid = false;
-    //                 return;
-    //             }
-    //         };
-    //         job.set_language(lang);
-    //         // 2. Check validity
-    //         if !self.valid {
-    //             return;
-    //         }
-    //         // 3. Submit to DB
-    //         let col = DATABASE.collection::<Job>("jobs");
-    //         if let Err(_res) = col.insert_one(job) {
-    //             self.valid = false;
-    //             return;
-    //         }
-    //         // 4. Reset inputs
-    //         let def = Self::default();
-    //         self.language = def.language;
-    //         self.start = def.start;
-    //         self.end = def.end;
-    //         self.title = def.title;
-    //         self.selector = def.selector;
-    //         // 5. Popup
-    //         self.popped = true;
-    //         self.moment = Instant::now();
-    //     }
-
-    fn reset_all(&mut self) {
-        let block = Block::default()
-            .style(Style::default().fg(Color::Gray))
-            .borders(Borders::ALL)
-            .border_type(BorderType::Rounded);
-
-        self.timestamp.set_block(block.clone().title(" Timestamp "));
-        self.start.set_block(block.clone().title(" Start Time "));
-        self.end.set_block(block.clone().title(" End Time "));
-        self.title.set_block(block.clone().title(" Enter Title "));
-        self.description
-            .set_block(block.clone().title(" Description "));
-        self.language.set_block(block.clone().title(" Language "));
-        self.tags.set_block(block.clone().title(" Enter Tags "));
     }
 
     fn focus_next(&mut self) {
@@ -377,12 +332,21 @@ impl Import {
         }
     }
 
-    fn get_meta(&self) -> Option<Metadata> {
-        if let Some(i) = self.files.get() {
-            Some(i.1.clone())
+    fn get_meta(&mut self) -> Option<Metadata> {
+        if let Some((s, meta)) = self.files.get() {
+            match meta {
+                Some(m) => return Some(m.clone()),
+                None => {
+                    if let Ok(newmeta) = Metadata::new(format!("{}/ingest/{}", ROOT.as_str(), s)) {
+                        self.files.set_one((s, Some(newmeta.clone())));
+                        return Some(newmeta);
+                    }
+                }
+            }
         } else {
-            None
+            return None;
         }
+        None
     }
 
     fn get_path(&self) -> Option<String> {
