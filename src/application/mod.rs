@@ -19,7 +19,8 @@ pub mod indexed;
 pub mod job;
 pub mod metadata;
 mod parse_date;
-mod processor;
+pub mod processor;
+pub mod status;
 pub mod tag;
 mod timestamp;
 

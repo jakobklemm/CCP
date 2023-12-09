@@ -213,7 +213,7 @@ impl Import {
         self.meta.popped = true;
         self.meta.moment = Instant::now();
         if let Some(file) = self.get_path() {
-            if let Ok(job) = Job::new(
+            if let Ok(_job) = Job::new(
                 file,
                 self.start.lines(),
                 self.end.lines(),
@@ -230,15 +230,17 @@ impl Import {
         } else {
             self.meta.valid = false;
         }
-        let deflt = Self::default();
-        self.title = deflt.title;
-        self.description = deflt.description;
-        self.timestamp = deflt.timestamp;
-        self.start = deflt.start;
-        self.end = deflt.end;
-        self.tags = deflt.tags;
-        self.language = deflt.language;
-        self.selected = 0;
+        if self.meta.valid {
+            let deflt = Self::default();
+            self.title = deflt.title;
+            self.description = deflt.description;
+            self.timestamp = deflt.timestamp;
+            self.start = deflt.start;
+            self.end = deflt.end;
+            self.tags = deflt.tags;
+            self.language = deflt.language;
+            self.selected = 0;
+        }
     }
 
     fn reset_all(&mut self) {

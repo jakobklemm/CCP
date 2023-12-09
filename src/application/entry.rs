@@ -2,7 +2,9 @@
 //!
 //! In PoloDB store
 
-use super::{id::Id, indexed::Indexed, tag::Tag};
+use std::fs::metadata;
+
+use super::{id::Id, indexed::Indexed, job::Job, tag::Tag, timestamp::Timestamp};
 use crate::{store::Entity, DATABASE};
 use anyhow::{anyhow, Result};
 use chrono::NaiveDate;
@@ -26,18 +28,42 @@ pub struct Entry {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct FileInfo {
-    size: f64,
-    duration: f64,
+    // in bytes
+    size: u64,
+    // in seconds
+    duration: i32,
 }
 
 impl Entry {
+    pub fn new(
+        id: Id,
+        file: &str,
+        title: String,
+        description: String,
+        transcript: String,
+        date: NaiveDate,
+        tags: Vec<Tag>,
+        duration: Timestamp,
+    ) -> Result<Self> {
+        Ok(Self {
+            id,
+            title,
+            transcript,
+            description,
+            date,
+            tags,
+            file: FileInfo::new(file, duration)?,
+        })
+    }
+
     pub fn search_str(&self) -> String {
         format!(
-            "{} - {} - {} - {}",
+            "{} - {} - {} - {} - {:?}",
             self.id.get(),
             self.date.format("%d-%m-%Y").to_string(),
             self.title,
-            self.transcript
+            self.description,
+            self.tags
         )
     }
 
@@ -52,6 +78,16 @@ impl Default for FileInfo {
             size: Default::default(),
             duration: Default::default(),
         }
+    }
+}
+
+impl FileInfo {
+    fn new(file: &str, duration: Timestamp) -> Result<Self> {
+        let meta = metadata(file)?;
+        Ok(Self {
+            size: meta.len(),
+            duration: duration.to_seconds(),
+        })
     }
 }
 
@@ -112,8 +148,8 @@ impl Entity for Entry {
         doc.add_text(transcript, self.transcript.clone());
         doc.add_text(desc, self.description.clone());
         doc.add_i64(id, self.id.get());
-        doc.add_f64(size, self.file.size);
-        doc.add_f64(duration, self.file.duration);
+        doc.add_u64(size, self.file.size);
+        doc.add_i64(duration, self.file.duration.into());
 
         let to_time = self.date.and_hms_opt(0, 0, 0).unwrap();
         let timestamp = DateTime::from_timestamp_secs(to_time.timestamp());

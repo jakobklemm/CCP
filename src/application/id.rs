@@ -1,6 +1,6 @@
 //! # Id
 
-use std::{fmt::format, fs};
+use std::{env::temp_dir, fmt::format, fs};
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
@@ -34,7 +34,23 @@ impl Id {
     }
 
     pub fn temp_path(&self) -> Result<String> {
-        Ok(format!("{}pass_1.mp4", self.temp_path()?))
+        Ok(format!("{}pass_1.mp4", self.temp_dir()?))
+    }
+
+    pub fn text_path(&self) -> Result<String> {
+        Ok(format!("{}pass_1.txt", self.temp_dir()?))
+    }
+
+    pub fn srt_path(&self) -> Result<String> {
+        Ok(format!("{}pass_1.srt", self.temp_dir()?))
+    }
+
+    pub fn srt_out(&self) -> Result<String> {
+        let path = format!("{}/subs/{}/", ROOT.as_str(), self.get_s());
+        let last = format!("{}.srt", self.get());
+        fs::create_dir_all(path.clone())?;
+
+        Ok(path + &last)
     }
 
     pub fn meta_path(&self) -> Result<String> {

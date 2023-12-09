@@ -16,6 +16,7 @@ use crate::handler::Event;
 use application::{
     actions::{self},
     indexed::Indexed,
+    job::Job,
     tag::Tag,
     App, Entry,
 };
@@ -53,11 +54,18 @@ fn main() -> Result<()> {
     // let e = actions::open_vlc(five.clone());
     // println!("{:?}", e);
 
+    // let j = Job::default();
+    // println!("JOB: {:?}", j);
+    // let r = crate::application::processor::execute(j);
+    //
+    // for msg in r.iter() {
+    //     println!("PROG: {:?}", msg);
+    // }
+
     let term = Terminal::new(CrosstermBackend::new(stderr()))?;
     let events = handler::EventHandler::new(100);
     let mut tui = terminal::Terminal::new(term, events);
     tui.enter()?;
-
     while !app.should_quit() {
         tui.draw(&mut app)?;
         match tui.events.next()? {
@@ -69,7 +77,6 @@ fn main() -> Result<()> {
             Event::Resize(_, _) => {}
         }
     }
-
     tui.exit()?;
 
     Ok(())
