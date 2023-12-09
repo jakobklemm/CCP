@@ -43,6 +43,14 @@ impl<E: Debug + Clone> ItemList<E> {
         self.items = items;
     }
 
+    pub fn set_one(&mut self, item: E) {
+        if let Some(i) = self.state.selected() {
+            if let Some(elem) = self.items.get_mut(i) {
+                *elem = item;
+            }
+        }
+    }
+
     pub fn next(&mut self) {
         if self.items.len() == 0 {
             return;

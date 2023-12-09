@@ -1,5 +1,6 @@
 //! # Timestamp
 
+use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 use std::ops::{Div, Sub};
 
@@ -46,14 +47,14 @@ impl Timestamp {
         3600 * self.hours + 60 * self.minutes + self.seconds
     }
 
-    pub fn from_input(lines: &[String]) -> String {
+    pub fn from_input(lines: &[String]) -> Result<Self> {
         for l in lines {
-            return l.clone();
+            return Self::from_str(l);
         }
-        String::new()
+        Err(anyhow!("invalid timestamp!"))
     }
 
-    pub fn from_str(line: impl ToString) -> Option<Self> {
+    pub fn from_str(line: impl ToString) -> Result<Self> {
         let binding = line.to_string();
         let parts = binding.split(":");
         let mut ts = Timestamp::default();
@@ -62,52 +63,33 @@ impl Timestamp {
                 0 => {
                     // println!("{:?}", part);
                     // ts.hours = part.parse().unwrap();
-                    if let Ok(h) = part.parse() {
-                        ts.hours = h;
-                    } else {
-                        return None;
-                    }
+                    ts.hours = part.parse()?;
                 }
                 1 => {
-                    // ts.minutes = part.parse().unwrap();
-                    if let Ok(m) = part.parse() {
-                        ts.minutes = m;
-                    } else {
-                        return None;
-                    }
+                    ts.minutes = part.parse()?;
                 }
                 2 => {
                     let inner_parts = part.split(".");
                     for (j, p) in inner_parts.into_iter().enumerate() {
                         match j {
                             0 => {
-                                // ts.seconds = p.parse().unwrap();
-                                if let Ok(s) = p.parse() {
-                                    ts.seconds = s;
-                                } else {
-                                    return None;
-                                }
+                                ts.seconds = p.parse()?;
                             }
                             1 => {
-                                // ts.millis = p.parse().unwrap();
-                                if let Ok(m) = p.parse() {
-                                    ts.millis = m;
-                                } else {
-                                    return None;
-                                }
+                                ts.millis = p.parse()?;
                             }
                             _ => {
-                                return None;
+                                return Err(anyhow!("invalid timestamp!"));
                             }
                         }
                     }
                 }
                 _ => {
-                    return None;
+                    return Err(anyhow!("invalid timestamp!"));
                 }
             }
         }
         // println!("{:?}", ts);
-        Some(ts)
+        Ok(ts)
     }
 }

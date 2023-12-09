@@ -16,6 +16,7 @@ use crate::handler::Event;
 use application::{
     actions::{self},
     indexed::Indexed,
+    tag::Tag,
     App, Entry,
 };
 // use crossterm::event::{self, KeyCode, KeyEventKind};
@@ -36,10 +37,12 @@ fn main() -> Result<()> {
     // let _ = manual();
     // println!("test");
 
-    for _ in 1..15 {
-        let e = Entry::default();
-        let _ = DATABASE.insert_indexed(e);
-    }
+    // for _ in 1..15 {
+    //     let e = Entry::default();
+    //     let _ = DATABASE.insert_indexed(e);
+    //     let t = Tag::default();
+    //     let _ = DATABASE.insert(t);
+    // }
 
     // let res: Vec<Entry> = DATABASE.search("*")?;
 
