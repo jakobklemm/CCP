@@ -122,8 +122,8 @@ impl Searcher {
 
         builder.add_i64_field("id", nums);
 
-        builder.add_f64_field("size", notstored.clone());
-        builder.add_f64_field("duration", notstored);
+        builder.add_u64_field("size", notstored.clone());
+        builder.add_i64_field("duration", notstored);
 
         let dates = DateOptions::default()
             .set_indexed()
