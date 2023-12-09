@@ -7,7 +7,7 @@ use std::process::{Command, Stdio};
 
 use anyhow::Result;
 
-use crate::ROOT;
+
 
 use super::Entry;
 

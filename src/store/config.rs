@@ -1,7 +1,7 @@
 //! # Config
 
 use serde::{Deserialize, Serialize};
-use tantivy::schema::{self, Schema};
+use tantivy::schema::{Schema};
 
 use super::Entity;
 
@@ -32,7 +32,7 @@ impl Entity for Config {
         "system"
     }
 
-    fn to_document(&self, schema: &Schema) -> anyhow::Result<tantivy::Document> {
+    fn to_document(&self, _schema: &Schema) -> anyhow::Result<tantivy::Document> {
         panic!("DO NOT INSERT CONFIG INTO FTS STORE.")
     }
 }

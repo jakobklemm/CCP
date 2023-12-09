@@ -1,8 +1,7 @@
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use std::fs;
-use std::io::{BufRead, BufReader};
-use std::process::{Command, Stdio};
+
+use std::process::Command;
 
 #[derive(Deserialize, Debug, Serialize, Clone)]
 pub struct Metadata {
@@ -35,14 +34,6 @@ impl Metadata {
         s.to_string()
     }
 }
-
-pub fn from_file() -> Metadata {
-    // let s = std::fs::read_to_string("test.json").unwrap();
-    // let m: Metadata = serde_json::from_str(&s).unwrap();
-    // return m;
-    todo!()
-}
-
 impl ToString for Metadata {
     fn to_string(&self) -> String {
         let mut top = format!(

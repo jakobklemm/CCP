@@ -6,8 +6,6 @@ use std::sync::mpsc::{channel, Receiver, Sender};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
-use crate::application::status::Status;
-
 #[derive(Clone, Debug)]
 pub enum Event {
     Tick,
@@ -16,6 +14,7 @@ pub enum Event {
     Resize(u16, u16),
 }
 
+#[allow(dead_code)]
 #[derive(Debug)]
 pub struct EventHandler {
     sender: Sender<Event>,

@@ -172,10 +172,6 @@ impl Job {
         self.end.clone()
     }
 
-    pub fn title(&self) -> String {
-        self.title.to_string()
-    }
-
     pub fn get_file(&self) -> String {
         self.file.to_string()
     }

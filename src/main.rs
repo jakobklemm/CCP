@@ -14,11 +14,7 @@ mod util;
 use crate::handler::Event;
 
 use application::{
-    actions::{self},
-    indexed::Indexed,
-    job::Job,
-    tag::Tag,
-    App, Entry,
+    App,
 };
 // use crossterm::event::{self, KeyCode, KeyEventKind};
 use lazy_static::lazy_static;
