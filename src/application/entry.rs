@@ -29,9 +29,9 @@ pub struct Entry {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct FileInfo {
     // in bytes
-    size: u64,
+    pub size: u64,
     // in seconds
-    duration: i32,
+    pub duration: i32,
 }
 
 impl Entry {
@@ -69,6 +69,10 @@ impl Entry {
 
     pub fn out_path(&self) -> Result<String> {
         self.id.data_path()
+    }
+
+    pub fn get_meta(&self) -> FileInfo {
+        self.file.clone()
     }
 }
 
